@@ -1,3 +1,3 @@
 import { app } from "./bin/www";
 
-export default app;
+module.exports = app;
