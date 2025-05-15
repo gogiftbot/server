@@ -1,1 +1,3 @@
-import "./bin/www";
+import { app } from "./bin/www";
+
+export default app;

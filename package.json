@@ -7,7 +7,7 @@
     "cli": "tsx src/cli/index.ts",
     "build": "tsup",
     "tsc:build": "tsc -p .",
-    "start": "node dist/bin/www.js",
+    "start": "node dist/index.js",
     "dev": "tsx src/bin/www.ts",
     "postinstall": "prisma generate --no-engine"
   },

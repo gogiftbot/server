@@ -37,3 +37,5 @@ console.log(`🚀 HTTP server listening at: http://localhost:${PORT}`);
 onShutdown(async () => {
   await context.prisma.$disconnect();
 });
+
+export { app };
