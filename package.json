@@ -6,6 +6,8 @@
   "scripts": {
     "cli": "tsx src/cli/index.ts",
     "build": "tsup",
+    "tsc:build": "tsc -p .",
+    "start:www": "node dist/bin/www.js",
     "dev": "tsx src/bin/www.ts"
   },
   "dependencies": {
