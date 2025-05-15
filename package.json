@@ -1,0 +1,37 @@
+{
+  "name": "casino-server",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "cli": "tsx src/cli/index.ts",
+    "build": "tsup",
+    "dev": "tsx src/bin/www.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "6.0.1",
+    "@ton-api/client": "^0.4.0",
+    "@ton/core": "^0.60.1",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^15.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-winston": "^4.2.0",
+    "helmet": "^7.1.0",
+    "node-telegram-bot-api": "^0.66.0",
+    "winston": "^3.17.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.2",
+    "@types/node-telegram-bot-api": "^0.64.7",
+    "prettier": "^3.3.3",
+    "prisma": "^6.0.1",
+    "tsup": "^8.2.3",
+    "tsx": "^4.16.5",
+    "typescript": "^5.5.4"
+  }
+}
