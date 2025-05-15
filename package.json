@@ -8,7 +8,8 @@
     "build": "tsup",
     "tsc:build": "tsc -p .",
     "start:www": "node dist/bin/www.js",
-    "dev": "tsx src/bin/www.ts"
+    "dev": "tsx src/bin/www.ts",
+    "postinstall": "prisma generate --no-engine"
   },
   "dependencies": {
     "@prisma/client": "6.0.1",
