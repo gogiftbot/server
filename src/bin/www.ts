@@ -2,13 +2,13 @@ import http from "http";
 import express from "express";
 import cors from "cors";
 
-import { config } from "config";
-import { initRouters } from "routes";
+import { config } from "@/config";
+import { initRouters } from "@/routes";
+import { BotService } from "@/services/bot.service";
 
 import { loggerMiddleware } from "./logger.middleware";
 import { context } from "./context";
 import { onShutdown } from "./utils/shutdown";
-import { BotService } from "services/bot.service";
 
 const corsOptions: cors.CorsOptions = {
   origin: "*",
@@ -30,9 +30,9 @@ app.use(initRouters(context));
 
 const PORT = config.PORT;
 
-await new Promise<void>((resolve) => server.listen({ port: PORT }, resolve));
-
-console.log(`🚀 HTTP server listening at: http://localhost:${PORT}`);
+server.listen({ port: PORT }, () => {
+  console.log(`🚀 HTTP server listening at: http://localhost:${PORT}`);
+});
 
 onShutdown(async () => {
   await context.prisma.$disconnect();

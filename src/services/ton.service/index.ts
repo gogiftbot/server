@@ -1,7 +1,7 @@
 import { SendMode, toNano } from "@ton/core";
 import { mnemonicToPrivateKey } from "@ton/crypto";
 import { TonClient, WalletContractV5R1, internal } from "@ton/ton";
-import { config } from "config";
+import { config } from "@/config";
 
 export class TonService {
   public async send(payload: { amount: number; address: string }) {

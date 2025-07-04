@@ -1,5 +1,5 @@
 declare interface Context {
-  prisma: import("@prisma/client").PrismaClient;
+  prisma: import("@/generated/prisma").PrismaClient;
   logger: import("modules/logger.module").LoggerI;
 }
 

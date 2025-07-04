@@ -10,8 +10,8 @@ import {
   ResponseStatus,
   ServiceResponse,
   StatusCode,
-} from "services/response.service";
-import { emitter } from "services/event.service";
+} from "@/services/response.service";
+import { emitter } from "@/services/event.service";
 
 const callback: Callback = (router, context) => {
   router.post(

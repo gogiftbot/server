@@ -3,10 +3,10 @@ import {
   transaction,
   TransactionStatus,
   TransactionType,
-} from "@prisma/client";
-import { config } from "config";
+} from "@/generated/prisma";
+import { config } from "@/config";
+import { emitter } from "@/services/event.service";
 import { TonService } from "../ton.service";
-import { emitter } from "services/event.service";
 
 export class BotService {
   private chatId = "-1002657439097";
@@ -275,6 +275,7 @@ export class BotService {
     });
 
     emitter.on(emitter.EVENTS.ON_WITHDRAW, async (transactionId: string) => {
+      console.log("emitter.EVENTS.ON_WITHDRAW", { transactionId });
       await this.onWithdraw({ transactionId });
     });
   }

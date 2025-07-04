@@ -3,7 +3,7 @@ import {
   ResponseStatus,
   ServiceResponse,
   StatusCode,
-} from "services/response.service";
+} from "@/services/response.service";
 import { ZodError, ZodSchema } from "zod";
 
 export type Callback = (router: express.Router, context: Context) => void;

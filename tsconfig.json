@@ -4,10 +4,13 @@
     "target": "es2023",
     "module": "esnext",
     "rootDirs": ["src"],
-    "baseUrl": "./src",
-    "paths": {},
+    "baseUrl": ".",
+    "paths": {
+      "@/generated/prisma": ["./generated/prisma/index"],
+      "@/*": ["./src/*"]
+    },
     "moduleResolution": "node",
-    "outDir": "dist",
+    "outDir": "api",
     "importsNotUsedAsValues": "remove",
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
@@ -20,8 +23,8 @@
     "types": ["node"]
   },
   "extends": [],
-  "exclude": ["dist", "node_modules"],
-  "include": ["src/**/*.ts", "src/types.d.ts"],
+  "exclude": ["api", "node_modules"],
+  "include": ["src/**/*.ts"],
   "ts-node": {
     "require": ["tsconfig-paths/register"]
   }

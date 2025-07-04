@@ -4,9 +4,10 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: ["./src"],
+  outDir: "api",
   splitting: false,
   clean: true,
-  format: ["esm"],
+  format: ["cjs"],
   target: "esnext",
   sourcemap: process.env.NODE_ENV === "development",
   tsconfig: path.resolve(__dirname, "tsconfig.json"),

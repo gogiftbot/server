@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-import { initLogger } from "modules/logger.module";
+import { PrismaClient } from "@/generated/prisma";
+import { initLogger } from "@/modules/logger.module";
 
 const initContext = async (): Promise<Context> => {
   const prisma = new PrismaClient();

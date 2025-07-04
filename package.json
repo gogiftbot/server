@@ -2,12 +2,11 @@
   "name": "casino-server",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
   "scripts": {
     "cli": "tsx src/cli/index.ts",
-    "build": "tsup",
+    "build": "prisma generate --no-engine && tsup",
     "tsc:build": "tsc -p .",
-    "start": "node dist/index.js",
+    "start": "node api/index.js",
     "dev": "tsx src/bin/www.ts",
     "postinstall": "prisma generate --no-engine"
   },
