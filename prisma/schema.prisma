@@ -1,11 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model referral {
@@ -35,6 +36,8 @@ model account {
   telegramId String?  @map("telegram_id") @db.VarChar(255)
   avatarUrl  String?  @map("avatar_url") @db.VarChar(255)
 
+  isBlocked Boolean @default(false)
+
   referral referral? @relation("referral_own")
 
   referredById String?   @map("referred_by_id")
@@ -43,6 +46,7 @@ model account {
   nfts         account_nft[]
   gifts        account_gift[]
   transactions transaction[]
+  bonuses      bonus[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt() @map("updated_at")
@@ -59,8 +63,6 @@ model nft {
 
   isArchived Boolean @default(false) @map("is_archived")
 
-  description nft_description?
-
   cases        gift_case[]
   nftAccounts  account_nft[]
   giftAccounts account_gift[]
@@ -69,24 +71,6 @@ model nft {
   updatedAt DateTime @updatedAt() @map("updated_at")
 
   @@map("nfts")
-}
-
-model nft_description {
-  id String @id @default(uuid())
-
-  roi        Float
-  iterations Int
-  isSoldOut  Boolean @default(false) @map("is_sold_out")
-  isNew      Boolean @default(false) @map("is_new")
-  isHot      Boolean @default(false) @map("is_hot")
-
-  nft   nft    @relation(fields: [nftId], references: [id])
-  nftId String @unique @map("nft_id")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt() @map("updated_at")
-
-  @@map("nft_descriptions")
 }
 
 model account_gift {
@@ -105,7 +89,7 @@ model account_gift {
   case   gift_case @relation(fields: [caseId], references: [id])
   caseId String    @map("case_id")
 
-  transaction transaction?
+  transaction transaction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt() @map("updated_at")
@@ -135,6 +119,7 @@ model gift_case {
   sku        String
   title      String
   price      Float
+  starPrice  Int     @default(0) @map("star_price")
   isArchived Boolean @default(false) @map("is_archived")
 
   gifts        nft[]
@@ -164,10 +149,11 @@ model account_nft_transaction {
 model transaction {
   id String @id @default(uuid())
 
-  type    TransactionType   @default(deposit)
-  status  TransactionStatus @default(pending)
-  amount  Float
-  address String?
+  type     TransactionType     @default(deposit)
+  status   TransactionStatus   @default(pending)
+  currency TransactionCurrency @default(ton)
+  amount   Float
+  address  String?
 
   accountId String
   account   account @relation(fields: [accountId], references: [id])
@@ -175,7 +161,9 @@ model transaction {
   tonTransaction ton_transaction?
 
   accountGift    account_gift? @relation(fields: [account_giftId], references: [id])
-  account_giftId String?       @unique
+  account_giftId String?
+
+  bonus bonus?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
@@ -199,6 +187,44 @@ model ton_transaction {
   @@map("ton_transactions")
 }
 
+model promo_code {
+  id String @id @default(uuid())
+
+  value      String  @unique
+  uses       Int
+  bonusValue Float?  @map("bonus_value")
+  isFreeCase Boolean @default(false) @map("is_free_case")
+
+  bonus bonus[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  @@map("promo_codes")
+}
+
+model bonus {
+  id String @id @default(uuid())
+
+  value  Float?
+  type   BonusType
+  isUsed Boolean   @default(false) @map("is_used")
+
+  promoCodeId String     @map("promo_code_id")
+  promo       promo_code @relation(fields: [promoCodeId], references: [id])
+
+  account   account @relation(fields: [accountId], references: [id])
+  accountId String  @map("account_id")
+
+  transaction   transaction? @relation(fields: [transactionId], references: [id])
+  transactionId String?      @unique @map("transaction_id")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  @@map("bonuses")
+}
+
 enum Language {
   RU
   EN
@@ -219,4 +245,18 @@ enum TransactionStatus {
   declined
 
   @@map("transaction_status")
+}
+
+enum TransactionCurrency {
+  ton
+  star
+
+  @@map("transaction_currency")
+}
+
+enum BonusType {
+  deposit
+  case
+
+  @@map("bonus_type")
 }

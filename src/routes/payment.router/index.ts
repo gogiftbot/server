@@ -6,31 +6,34 @@ import {
   validateRequest,
   routeWrapper,
 } from "../utils";
+import { PaymentOpen } from './payment.open'
+import { PaymentCreate } from './payment.create'
 import {
   ResponseStatus,
   ServiceResponse,
   StatusCode,
 } from "@/services/response.service";
-import { emitter } from "@/services/event.service";
 
 const callback: Callback = (router, context) => {
   router.post(
-    "/deposit",
+    "/create",
     validateRequest(
       z.object({
         body: z.object({
-          transactionId: z.string(),
+          caseId: z.string(),
         }),
       }),
     ),
     routeWrapper(async (req) => {
       try {
-        emitter.onDeposit(req.body.transactionId);
+        if (!req.account) throw new Error('UNAUTHORIZED');
+
+        const data = await PaymentCreate(context.prisma, req.account, req.body);
 
         const serviceResponse = new ServiceResponse(
           ResponseStatus.Success,
           "Success",
-          null,
+          data,
           StatusCode.Ok,
         );
 
@@ -47,22 +50,25 @@ const callback: Callback = (router, context) => {
   );
 
   router.post(
-    "/withdraw",
+    "/open",
     validateRequest(
       z.object({
         body: z.object({
+          caseId: z.string(),
           transactionId: z.string(),
         }),
       }),
     ),
     routeWrapper(async (req) => {
       try {
-        emitter.onWithdraw(req.body.transactionId);
+        if (!req.account) throw new Error('UNAUTHORIZED');
+
+        const data = await PaymentOpen(context.prisma, req.account, req.body);
 
         const serviceResponse = new ServiceResponse(
           ResponseStatus.Success,
           "Success",
-          null,
+          data,
           StatusCode.Ok,
         );
 

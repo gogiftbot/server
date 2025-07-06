@@ -1,81 +1,312 @@
 import TelegramBot, { SendMessageOptions } from "node-telegram-bot-api";
 import {
+  Language,
   transaction,
+  TransactionCurrency,
   TransactionStatus,
   TransactionType,
-} from "@/generated/prisma";
-import { config } from "@/config";
-import { emitter } from "@/services/event.service";
-import { TonService } from "../ton.service";
+} from "@prisma/client";
+import { tonService } from "../ton.service";
+import { config } from "../config.service";
+import { numberToString } from "@/utils/number";
+import { updateCasePrice } from "./updateCasePrice";
+import { getCasesPrices } from "./getCasesPrices";
+import { createRef } from "./createRef";
+import { ref } from "./ref";
+import { stat } from "./stat";
+import { codeToLanguage } from "@/utils/language";
+import {
+  depositTransactionMessage,
+  failedGiftTransactionMessage,
+  welcomeMessage,
+  welcomeMessageOptions,
+} from "./messages";
+import { createPromo } from "./createPromo";
+import { marketplaceService } from "../marketplace.service";
+import { incrementBalance } from "./incrementBalance";
+import { getAccount } from "./account";
+import { updateRef } from "./updateRef";
+import { createPromoCase } from "./createPromoCase";
+import retry from "async-retry";
+import { blockAccount } from "./block";
+import { unblockAccount } from "./unblock";
+
+const welcomeMessageImage = "https://gogift.vercel.app/start_image.png";
 
 export class BotService {
-  private chatId = "-1002657439097";
-  private bot: TelegramBot;
-  private readonly tonService: TonService;
+  public chatId = "-1002657439097";
+  public bot: TelegramBot;
 
-  constructor(private context: Context) {
-    this.bot = new TelegramBot(config.bot.apiKey, {
-      polling: {
-        interval: 1000,
-      },
+
+  constructor(private readonly prisma: Context['prisma'], polling = false) {
+    this.bot = new TelegramBot(config.BOT_API_KEY, {
+      polling: polling
+        ? {
+          interval: 1000,
+        }
+        : false,
     });
-    this.tonService = new TonService();
   }
 
-  start() {
-    this.bot.on("callback_query", async (callbackQuery) => {
-      const data = callbackQuery.data;
-      await this.bot.answerCallbackQuery(callbackQuery.id);
+  public listen() {
+    this.bot.on("error", (error) => {
+      console.error((error as Error).message);
+    });
 
-      if (data?.startsWith("w_r_a_")) {
-        try {
-          const transactionId = data.split("_").pop();
-          if (!transactionId) throw new Error("InvalidTransactionId");
-          if (!callbackQuery.message) throw new Error("InvalidMessage");
+    this.bot.on("pre_checkout_query", async (query) => {
+      try {
+        const payload = JSON.parse(query.invoice_payload);
+        if (!payload.transactionId) throw new Error("InvalidTransactionId");
 
-          const transaction = await this.withdraw({ transactionId });
+        await this.prisma.transaction.findFirstOrThrow({
+          where: {
+            id: payload.transactionId,
+            type: TransactionType.deposit,
+            status: TransactionStatus.pending,
+            currency: TransactionCurrency.star,
+            amount: query.total_amount,
+            accountGift: null,
+          },
+          select: { id: true },
+        });
 
-          if (transaction.account.telegramId) {
-            await this.bot
-              .sendMessage(
-                transaction.account.telegramId,
-                `✅ Transaction created! Amount of ${transaction.amount.toLocaleString(
-                  "en-US",
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  },
-                )} TON has been send to your wallet (${transaction.address}).`,
-              )
-              .catch();
-          }
-
-          await this.bot.sendMessage(
-            callbackQuery.message.chat.id,
-            "✅ Success!",
-            {
-              reply_to_message_id: callbackQuery.message.message_id,
-            },
-          );
-        } catch (error) {
-          await this.bot.sendMessage(
-            callbackQuery.message!.chat.id,
-            `⚠️ Error: ${(error as Error).message}`,
-            {
-              reply_to_message_id: callbackQuery.message?.message_id,
-            },
-          );
-        }
+        await this.bot.answerPreCheckoutQuery(query.id, true).catch((e) => { });
+      } catch (error) {
+        await this.bot
+          .answerPreCheckoutQuery(query.id, false, {
+            error_message: "error",
+          })
+          .catch((e) => { });
       }
+    });
 
-      if (data?.startsWith("w_r_d_")) {
+    this.bot.on("message", async ({ successful_payment }) => {
+      if (successful_payment) {
         try {
-          const transactionId = data.split("_").pop();
-          if (!transactionId) throw new Error("InvalidTransactionId");
-          if (!callbackQuery.message) throw new Error("InvalidMessage");
+          const payload = JSON.parse(successful_payment.invoice_payload);
+          if (!payload.transactionId) throw new Error("InvalidTransactionId");
 
-          const transaction = await this.context.prisma.$transaction(
-            async (tx) => {
+          const transaction = await this.prisma.transaction.findFirstOrThrow({
+            where: {
+              id: payload.transactionId,
+              type: TransactionType.deposit,
+              status: TransactionStatus.pending,
+              currency: TransactionCurrency.star,
+              accountGift: null,
+            },
+            select: { id: true },
+          });
+
+          await this.prisma.transaction.update({
+            where: {
+              id: transaction.id,
+            },
+            data: {
+              status: TransactionStatus.completed,
+            },
+          });
+
+          await this.onTransaction(
+            payload.transactionId,
+            TransactionCurrency.star
+          );
+        } catch (error) { }
+      }
+    });
+
+    this.bot.onText(/\/update\s+['"]([^'"]+)['"]\s+([\d.]+)/, async (...args) =>
+      updateCasePrice(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(/\/promo\s+['"]([^'"]+)['"]\s+([\d.]+)/, async (...args) =>
+      createPromo(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(
+      /\/promo_case\s+['"]([^'"]+)['"]\s+([\d.]+)/,
+      async (...args) => createPromoCase(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(
+      /\/add_balance\s+['"]([^'"]+)['"]\s+([\d.]+)/,
+      async (...args) => incrementBalance(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(/\/account\s+['"]([^'"]+)['"]/, async (...args) =>
+      getAccount(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(/\/block\s+['"]([^'"]+)['"]/, async (...args) =>
+      blockAccount(...args, this.bot, this.chatId, this.prisma)
+    );
+    this.bot.onText(/\/unblock\s+['"]([^'"]+)['"]/, async (...args) =>
+      unblockAccount(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(/\/case_price/, async (...args) =>
+      getCasesPrices(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(/\/ref/, async (...args) =>
+      ref(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(/\/stat/, async (...args) =>
+      stat(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(/\/create_ref/, async (...args) =>
+      createRef(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(
+      /\/update_ref\s+['"]([^'"]+)['"]\s+([\d.]+)/,
+      async (...args) => updateRef(...args, this.bot, this.chatId, this.prisma)
+    );
+
+    this.bot.onText(/\/start/, async (message) => {
+      try {
+        const language = codeToLanguage(message.from?.language_code);
+
+        const name = message.from?.username
+          ? `@${message.from.username}`
+          : language === Language.RU
+            ? "незнакомец"
+            : "stranger";
+
+        const account = await this.prisma.account.findFirst({
+          where: {
+            username: message.from?.username,
+          },
+          select: {
+            referral: {
+              select: {
+                value: true,
+              },
+            },
+          },
+        });
+
+        await this.bot.sendPhoto(message.chat.id, welcomeMessageImage, {
+          caption: welcomeMessage(name, language),
+          ...welcomeMessageOptions(language, account?.referral?.value),
+        });
+      } catch (error) {
+        console.error((error as Error).message);
+      }
+    });
+
+    this.bot.on("callback_query", async (callbackQuery) => {
+      try {
+        const language = codeToLanguage(callbackQuery.from?.language_code);
+        const data = callbackQuery.data;
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+
+        // if (data?.startsWith("w_r_a_")) {
+        //   try {
+        //     const transactionId = data.split("_").pop();
+        //     if (!transactionId) throw new Error("InvalidTransactionId");
+        //     if (!callbackQuery.message) throw new Error("InvalidMessage");
+
+        //     const transaction = await this.withdraw({ transactionId });
+
+        //     if (transaction.account.telegramId) {
+        //       await this.bot
+        //         .sendMessage(
+        //           transaction.account.telegramId,
+        //           successTransactionMessage(language)(transaction)
+        //         )
+        //         .catch();
+        //     }
+
+        //     await this.bot.sendMessage(
+        //       callbackQuery.message.chat.id,
+        //       "✅ Success!",
+        //       {
+        //         reply_to_message_id: callbackQuery.message.message_id,
+        //       }
+        //     );
+        //   } catch (error) {
+        //     await this.bot.sendMessage(
+        //       callbackQuery.message!.chat.id,
+        //       `⚠️ Error: ${(error as Error).message}`,
+        //       {
+        //         reply_to_message_id: callbackQuery.message?.message_id,
+        //       }
+        //     );
+        //   }
+        // }
+
+        // if (data?.startsWith("w_r_d_")) {
+        //   try {
+        //     const transactionId = data.split("_").pop();
+        //     if (!transactionId) throw new Error("InvalidTransactionId");
+        //     if (!callbackQuery.message) throw new Error("InvalidMessage");
+
+        //     const transaction = await prisma.$transaction(async (tx) => {
+        //       const transaction = await tx.transaction.findUniqueOrThrow({
+        //         where: {
+        //           id: transactionId,
+        //           status: TransactionStatus.pending,
+        //         },
+        //         select: {
+        //           id: true,
+        //           amount: true,
+        //           account: { select: { id: true, telegramId: true } },
+        //         },
+        //       });
+
+        //       await tx.account.update({
+        //         where: { id: transaction.account.id },
+        //         data: { balance: { increment: transaction.amount } },
+        //       });
+
+        //       await tx.transaction.update({
+        //         where: {
+        //           id: transaction.id,
+        //         },
+        //         data: {
+        //           status: TransactionStatus.declined,
+        //         },
+        //       });
+
+        //       return transaction;
+        //     });
+
+        //     if (transaction.account.telegramId) {
+        //       await this.bot
+        //         .sendMessage(
+        //           transaction.account.telegramId,
+        //           failedTransactionMessage(language)(transaction)
+        //         )
+        //         .catch();
+        //     }
+
+        //     await this.bot.sendMessage(
+        //       callbackQuery.message.chat.id,
+        //       "❌ Declined!",
+        //       {
+        //         reply_to_message_id: callbackQuery.message.message_id,
+        //       }
+        //     );
+        //   } catch (error) {
+        //     await this.bot.sendMessage(
+        //       callbackQuery.message!.chat.id,
+        //       `⚠️ Error: ${(error as Error).message}`,
+        //       {
+        //         reply_to_message_id: callbackQuery.message?.message_id,
+        //       }
+        //     );
+        //   }
+        // }
+
+        if (data?.startsWith("g_w_r_a_")) {
+          try {
+            const transactionId = data.split("_").pop();
+            if (!transactionId) throw new Error("InvalidTransactionId");
+            if (!callbackQuery.message) throw new Error("InvalidMessage");
+
+            await this.prisma.$transaction(async (tx) => {
               const transaction = await tx.transaction.findUniqueOrThrow({
                 where: {
                   id: transactionId,
@@ -83,115 +314,126 @@ export class BotService {
                 },
                 select: {
                   id: true,
-                  amount: true,
-                  account: { select: { id: true, telegramId: true } },
+                  accountGift: { select: { nft: true } },
+                  account: { select: { telegramId: true } },
                 },
               });
 
-              await tx.account.update({
-                where: { id: transaction.account.id },
-                data: { balance: { increment: transaction.amount } },
-              });
+              if (!transaction.accountGift) throw new Error("INVALID_GIFT");
+              if (!transaction.account.telegramId)
+                throw new Error("INVALID_TELEGRAM_ID");
 
               await tx.transaction.update({
                 where: {
                   id: transaction.id,
                 },
                 data: {
-                  status: TransactionStatus.declined,
+                  status: TransactionStatus.completed,
                 },
               });
 
+              await retry(
+                async () => {
+                  const gift = await marketplaceService
+                    .getGiftToWithdraw({
+                      title: transaction.accountGift!.nft.title,
+                    })
+                    .catch(() => {
+                      throw new Error(`cant_purchase (check ton balance)`);
+                    });
+
+                  try {
+                    await marketplaceService.sendGift({
+                      id: gift.id,
+                      recipient: transaction.account.telegramId!,
+                    });
+                  } catch (error) {
+                    throw new Error(`cant_send:${transaction.id}`);
+                  }
+                },
+                {
+                  retries: 3,
+                }
+              );
+
               return transaction;
-            },
-          );
+            });
 
-          if (transaction.account.telegramId) {
-            await this.bot
-              .sendMessage(
-                transaction.account.telegramId,
-                `❌ Transaction Declined! Amount of ${transaction.amount.toLocaleString(
-                  "en-US",
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+            await this.bot.sendMessage(
+              callbackQuery.message.chat.id,
+              "✅ Success!",
+              {
+                reply_to_message_id: callbackQuery.message.message_id,
+              }
+            );
+          } catch (error) {
+            const message = (error as Error).message;
+            const transactionId = message.split(":").pop()!;
+            if (message.startsWith("cant_send:")) {
+              await this.prisma.$transaction(async (tx) => {
+                const transaction = await tx.transaction.update({
+                  where: {
+                    id: transactionId,
                   },
-                )} TON has been added to your balance.`,
-              )
-              .catch();
+                  data: {
+                    status: TransactionStatus.declined,
+                  },
+                  select: {
+                    accountGift: {
+                      select: {
+                        id: true,
+                        nft: {
+                          select: {
+                            title: true,
+                          },
+                        },
+                      },
+                    },
+                    account: { select: { telegramId: true } },
+                  },
+                });
+
+                if (transaction.accountGift) {
+                  await tx.account_gift.update({
+                    where: {
+                      id: transaction.accountGift.id,
+                    },
+                    data: {
+                      isWithdraw: false,
+                    },
+                  });
+                }
+
+                if (transaction.account.telegramId) {
+                  await this.bot
+                    .sendMessage(
+                      transaction.account.telegramId,
+                      failedGiftTransactionMessage(language)(
+                        transaction.accountGift?.nft.title
+                      )
+                    )
+                    .catch(() => { });
+                }
+              });
+            }
+
+            await this.bot.sendMessage(
+              callbackQuery.message!.chat.id,
+              `⚠️ Error: ${message}`,
+              {
+                reply_to_message_id: callbackQuery.message?.message_id,
+              }
+            );
           }
-
-          await this.bot.sendMessage(
-            callbackQuery.message.chat.id,
-            "❌ Declined!",
-            {
-              reply_to_message_id: callbackQuery.message.message_id,
-            },
-          );
-        } catch (error) {
-          await this.bot.sendMessage(
-            callbackQuery.message!.chat.id,
-            `⚠️ Error: ${(error as Error).message}`,
-            {
-              reply_to_message_id: callbackQuery.message?.message_id,
-            },
-          );
         }
-      }
 
-      if (data?.startsWith("g_w_r_a_")) {
-        try {
-          const transactionId = data.split("_").pop();
-          if (!transactionId) throw new Error("InvalidTransactionId");
-          if (!callbackQuery.message) throw new Error("InvalidMessage");
+        if (data?.startsWith("g_w_r_d_")) {
+          try {
+            const transactionId = data.split("_").pop();
+            if (!transactionId) throw new Error("InvalidTransactionId");
+            if (!callbackQuery.message) throw new Error("InvalidMessage");
 
-          await this.context.prisma.$transaction(async (tx) => {
-            const transaction = await tx.transaction.findUniqueOrThrow({
-              where: { id: transactionId, status: TransactionStatus.pending },
-              select: {
-                id: true,
-                account: { select: { telegramId: true } },
-              },
-            });
-
-            await tx.transaction.update({
-              where: {
-                id: transaction.id,
-              },
-              data: {
-                status: TransactionStatus.completed,
-              },
-            });
-
-            return transaction;
-          });
-
-          await this.bot.sendMessage(
-            callbackQuery.message.chat.id,
-            "✅ Success!",
-            {
-              reply_to_message_id: callbackQuery.message.message_id,
-            },
-          );
-        } catch (error) {
-          await this.bot.sendMessage(
-            callbackQuery.message!.chat.id,
-            `⚠️ Error: ${(error as Error).message}`,
-            {
-              reply_to_message_id: callbackQuery.message?.message_id,
-            },
-          );
-        }
-      }
-
-      if (data?.startsWith("g_w_r_d_")) {
-        try {
-          const transactionId = data.split("_").pop();
-          if (!transactionId) throw new Error("InvalidTransactionId");
-          if (!callbackQuery.message) throw new Error("InvalidMessage");
-
-          const transaction = await this.context.prisma.$transaction(
-            async (tx) => {
+            const transaction = await this.prisma.$transaction(async (tx) => {
               const transaction = await tx.transaction.findUniqueOrThrow({
                 where: {
                   id: transactionId,
@@ -201,15 +443,17 @@ export class BotService {
                   id: true,
                   amount: true,
                   account: { select: { id: true, telegramId: true } },
-                  account_giftId: true,
+                  accountGift: {
+                    select: { id: true, nft: { select: { title: true } } },
+                  },
                 },
               });
 
-              if (!transaction.account_giftId) throw new Error("InvalidGift");
+              if (!transaction.accountGift) throw new Error("InvalidGift");
 
               await tx.account_gift.update({
                 where: {
-                  id: transaction.account_giftId,
+                  id: transaction.accountGift.id,
                 },
                 data: {
                   isWithdraw: false,
@@ -226,42 +470,46 @@ export class BotService {
               });
 
               return transaction;
-            },
-          );
+            });
 
-          if (transaction.account.telegramId) {
+            if (transaction.account.telegramId) {
+              await this.bot
+                .sendMessage(
+                  transaction.account.telegramId,
+                  failedGiftTransactionMessage(language)(
+                    transaction.accountGift?.nft.title
+                  )
+                )
+                .catch(() => { });
+            }
+
+            await this.bot
+              .sendMessage(callbackQuery.message.chat.id, "❌ Declined!", {
+                reply_to_message_id: callbackQuery.message.message_id,
+              })
+              .catch(() => { });
+          } catch (error) {
             await this.bot
               .sendMessage(
-                transaction.account.telegramId,
-                `❌ Gift withdraw Declined! Gift has been added to your inventory.`,
+                callbackQuery.message!.chat.id,
+                `⚠️ Error: ${(error as Error).message}`,
+                {
+                  reply_to_message_id: callbackQuery.message?.message_id,
+                }
               )
-              .catch();
+              .catch(() => { });
           }
-
-          await this.bot.sendMessage(
-            callbackQuery.message.chat.id,
-            "❌ Declined!",
-            {
-              reply_to_message_id: callbackQuery.message.message_id,
-            },
-          );
-        } catch (error) {
-          await this.bot.sendMessage(
-            callbackQuery.message!.chat.id,
-            `⚠️ Error: ${(error as Error).message}`,
-            {
-              reply_to_message_id: callbackQuery.message?.message_id,
-            },
-          );
         }
+      } catch (error) {
+        console.error((error as Error).message);
       }
     });
 
     this.bot.on("polling_error", (error: any) => {
-      this.context.logger.error(`Polling error`, error);
+      console.error(`Polling error`, (error as Error).message);
 
       if (error.code === "EFATAL") {
-        this.context.logger.info("Fatal error occurred, bot will restart.");
+        console.info("Fatal error occurred, bot will restart.");
 
         this.bot.stopPolling();
         setTimeout(() => {
@@ -269,19 +517,10 @@ export class BotService {
         }, 10000);
       }
     });
-
-    emitter.on(emitter.EVENTS.ON_DEPOSIT, async (transactionId: string) => {
-      await this.onDeposit({ transactionId });
-    });
-
-    emitter.on(emitter.EVENTS.ON_WITHDRAW, async (transactionId: string) => {
-      console.log("emitter.EVENTS.ON_WITHDRAW", { transactionId });
-      await this.onWithdraw({ transactionId });
-    });
   }
 
   private async withdraw(payload: { transactionId: string }) {
-    const transaction = await this.context.prisma.$transaction(
+    const transaction = await this.prisma.$transaction(
       async (tx) => {
         const transaction = await tx.transaction.findUniqueOrThrow({
           where: {
@@ -300,7 +539,7 @@ export class BotService {
 
         if (!transaction.address) throw new Error("InvalidAddress");
 
-        const from = await this.tonService.send({
+        const from = await tonService.send({
           amount: transaction.amount,
           address: transaction.address,
         });
@@ -326,151 +565,184 @@ export class BotService {
       },
       {
         timeout: 15_000,
-      },
+      }
     );
 
     return transaction;
   }
 
   public async onDeposit(payload: { transactionId: string }) {
-    const transaction = await this.context.prisma.transaction.findUniqueOrThrow(
-      {
-        where: {
-          id: payload.transactionId,
-        },
-        select: {
-          amount: true,
-          account: {
-            select: {
-              username: true,
-              telegramId: true,
-            },
-          },
-        },
-      },
+    const transaction = await this.onTransaction(
+      payload.transactionId,
+      TransactionCurrency.ton
     );
 
-    const data = {
-      username: transaction.account.username,
-      amount: transaction.amount.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    };
-
-    const options: SendMessageOptions = {
-      parse_mode: "HTML",
-    };
-
-    const formattedJson = JSON.stringify(data, null, 2);
-    const message = `<b>DEPOSIT</b>\n<pre><code class="language-json">${formattedJson}</code></pre>`;
-    await this.bot.sendMessage(this.chatId, message, options);
-
     if (transaction.account.telegramId) {
-      await this.bot.sendMessage(
-        transaction.account.telegramId,
-        `✅ Transaction complete. Amount of ${transaction.amount.toLocaleString(
-          "en-US",
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          },
-        )} TON has been added to your balance.`,
-      );
+      await this.bot
+        .sendMessage(
+          transaction.account.telegramId,
+          depositTransactionMessage(transaction.account.language)(transaction)
+        )
+        .catch(() => { });
     }
   }
 
   public async onWithdraw(payload: { transactionId: string }) {
-    const transaction = await this.context.prisma.transaction.findUniqueOrThrow(
-      {
-        where: {
-          id: payload.transactionId,
-        },
-        select: {
-          amount: true,
-          address: true,
-          accountGift: {
-            select: {
-              nft: {
-                select: {
-                  title: true,
-                  price: true,
-                },
+    const transaction = await this.prisma.transaction.findUniqueOrThrow({
+      where: {
+        id: payload.transactionId,
+      },
+      select: {
+        id: true,
+
+        amount: true,
+        address: true,
+        accountGift: {
+          select: {
+            nft: {
+              select: {
+                title: true,
+                price: true,
               },
-              case: {
-                select: {
-                  title: true,
-                },
+            },
+            case: {
+              select: {
+                title: true,
               },
             },
           },
-          account: {
-            select: {
-              username: true,
-              balance: true,
-              gifts: {
-                where: {
-                  isSold: false,
-                  isWithdraw: false,
-                },
-                select: {
-                  price: true,
-                },
+        },
+        account: {
+          select: {
+            telegramId: true,
+            username: true,
+            balance: true,
+            gifts: {
+              where: {
+                isSold: false,
+                isWithdraw: false,
               },
-              referral: {
-                select: {
-                  percent: true,
-                  accounts: {
-                    select: {
-                      transactions: true,
+              select: {
+                price: true,
+              },
+            },
+            referral: {
+              select: {
+                percent: true,
+                accounts: {
+                  select: {
+                    transactions: {
+                      include: {
+                        accountGift: true,
+                      },
                     },
                   },
                 },
               },
-              transactions: true,
-              createdAt: true,
             },
+            transactions: {
+              include: {
+                accountGift: true,
+              },
+            },
+            createdAt: true,
           },
         },
       },
-    );
+    });
 
-    const foo = (type: TransactionType, txs: transaction[] = []) =>
-      txs
-        .filter(
-          (tx) => tx.status === TransactionStatus.completed && tx.type === type,
-        )
-        .reduce((total, tx) => total + tx.amount, 0);
+    const foo = (
+      type: TransactionType,
+      currency: TransactionCurrency,
+      txs: transaction[] = []
+    ) =>
+      numberToString(
+        txs
+          .filter(
+            (tx) =>
+              tx.status === TransactionStatus.completed &&
+              tx.type === type &&
+              tx.currency === currency
+          )
+          .reduce((total, tx) => total + tx.amount, 0)
+      );
 
     const referralTransactions = transaction.account.referral?.accounts.flatMap(
-      (acc) => acc.transactions,
+      (acc) => acc.transactions
     );
 
+    const username = `@${transaction.account.username}`;
+
     const data = {
+      id: transaction.id,
       address: transaction.address,
-      amount: transaction.amount.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-      username: transaction.account.username,
-      balance: transaction.account.balance,
-      inventory: transaction.account.gifts.reduce(
-        (total, gift) => total + gift.price,
-        0,
+      amount: numberToString(transaction.amount),
+      username,
+      balance: numberToString(transaction.account.balance),
+      inventory: numberToString(
+        transaction.account.gifts.reduce((total, gift) => total + gift.price, 0)
       ),
-      deposit: foo(TransactionType.deposit, transaction.account.transactions),
-      withdraw: foo(TransactionType.withdraw, transaction.account.transactions),
+      deposit: {
+        ton: foo(
+          TransactionType.deposit,
+          TransactionCurrency.ton,
+          transaction.account.transactions
+        ),
+        star: transaction.account.transactions
+          .filter(
+            (tx) =>
+              (
+                [
+                  TransactionStatus.completed,
+                  TransactionStatus.pending,
+                ] as string[]
+              ).includes(tx.status) &&
+              TransactionCurrency.star === tx.currency &&
+              TransactionType.deposit === tx.type &&
+              !!tx.accountGift
+          )
+          .reduce((total, tx) => total + tx.amount, 0),
+      },
+      withdraw: foo(
+        TransactionType.withdraw,
+        TransactionCurrency.ton,
+        transaction.account.transactions
+      ),
       referrals: {
         count: transaction.account.referral?.accounts.length || 0,
-        deposit: foo(TransactionType.deposit, referralTransactions),
-        withdraw: foo(TransactionType.withdraw, referralTransactions),
+        deposit: {
+          ton: foo(
+            TransactionType.deposit,
+            TransactionCurrency.ton,
+            referralTransactions
+          ),
+          star: referralTransactions
+            ?.filter(
+              (tx) =>
+                (
+                  [
+                    TransactionStatus.completed,
+                    TransactionStatus.pending,
+                  ] as string[]
+                ).includes(tx.status) &&
+                TransactionCurrency.star === tx.currency &&
+                TransactionType.deposit === tx.type &&
+                !!tx.accountGift
+            )
+            .reduce((total, tx) => total + tx.amount, 0),
+        },
+        withdraw: foo(
+          TransactionType.withdraw,
+          TransactionCurrency.ton,
+          referralTransactions
+        ),
       },
       gift: transaction.accountGift
         ? {
-            price: transaction.accountGift.nft.price,
-            title: transaction.accountGift.nft.title,
-            case: transaction.accountGift.case.title,
-          }
+          price: transaction.accountGift.nft.price,
+          title: transaction.accountGift.nft.title,
+          case: transaction.accountGift.case.title,
+        }
         : null,
       createdAt: transaction.account.createdAt.toLocaleDateString("en-US", {
         month: "long",
@@ -487,34 +759,207 @@ export class BotService {
         inline_keyboard: [
           isGiftWithdraw
             ? [
-                {
-                  text: "Submit",
-                  callback_data: `g_w_r_a_${payload.transactionId}`,
-                },
-                {
-                  text: "Decline",
-                  callback_data: `g_w_r_d_${payload.transactionId}`,
-                },
-              ]
+              {
+                text: "Submit",
+                callback_data: `g_w_r_a_${payload.transactionId}`,
+              },
+              {
+                text: "Decline",
+                callback_data: `g_w_r_d_${payload.transactionId}`,
+              },
+            ]
             : [
-                {
-                  text: "Accept",
-                  callback_data: `w_r_a_${payload.transactionId}`,
-                },
-                {
-                  text: "Decline",
-                  callback_data: `w_r_d_${payload.transactionId}`,
-                },
-              ],
+              {
+                text: "Accept",
+                callback_data: `w_r_a_${payload.transactionId}`,
+              },
+              {
+                text: "Decline",
+                callback_data: `w_r_d_${payload.transactionId}`,
+              },
+            ],
         ],
       },
     };
 
     const formattedJson = JSON.stringify(data, null, 2);
-    const message = `<b>${
-      isGiftWithdraw ? "GIFT " : ""
-    }WITHDRAW</b>\n<pre><code class="language-json">${formattedJson}</code></pre>`;
+    const message = `<b>${isGiftWithdraw ? "GIFT " : ""
+      }WITHDRAW</b> ${username}\n<pre><code class="language-json">${formattedJson}</code></pre>`;
 
     await this.bot.sendMessage(this.chatId, message, options);
   }
+
+  public async onStart(payload: {
+    referral?: string;
+    username: string;
+    telegramId: string;
+    language: Language;
+  }) {
+    try {
+      await this.bot.sendPhoto(payload.telegramId, welcomeMessageImage, {
+        caption: welcomeMessage(`@${payload.username}`, payload.language),
+        ...welcomeMessageOptions(payload.language, payload.referral),
+      });
+    } catch (error) {
+      console.error((error as Error).message);
+    }
+  }
+
+  public async casePriceAlert(
+    payload: {
+      case: string;
+      price: number;
+      price_0_margin: number;
+      price_50_margin: number;
+    }[]
+  ) {
+    const data = payload.map((item) => ({
+      case: item.case,
+      price: `${numberToString(item.price)} TON`,
+      "price (0%)": `${numberToString(item.price_0_margin)} TON`,
+      "price (50%)": `${numberToString(item.price_50_margin)} TON`,
+    }));
+
+    const options: SendMessageOptions = {
+      parse_mode: "HTML",
+    };
+
+    const formattedJson = JSON.stringify(data, null, 2);
+    const message = `⚠️ <b>CASE PRICE ALERT</b>\n<pre><code class="language-json">${formattedJson}</code></pre>`;
+    await this.bot.sendMessage(this.chatId, message, options);
+  }
+
+  public async createPaymentLink(payload: {
+    transactionId: string;
+    amount: number;
+    title: string;
+  }) {
+    try {
+      const invoiceLink = await this.bot.createInvoiceLink(
+        `${payload.title} Case`,
+        `GoGift Case ${payload.title}`,
+        JSON.stringify({ transactionId: payload.transactionId }),
+        "",
+        "XTR",
+        [{ amount: payload.amount, label: payload.title }]
+      );
+
+      return invoiceLink;
+    } catch (error) {
+      console.error("bot.service createPaymentLink", (error as Error).message);
+      throw error;
+    }
+  }
+
+  async onTransaction(transactionId: string, currency: TransactionCurrency) {
+    const transaction = await this.prisma.transaction.findUniqueOrThrow({
+      where: {
+        id: transactionId,
+      },
+      select: {
+        amount: true,
+        bonus: {
+          select: {
+            value: true,
+          },
+        },
+        tonTransaction: {
+          select: {
+            from: true,
+          },
+        },
+        account: {
+          select: {
+            username: true,
+            telegramId: true,
+            language: true,
+            transactions: {
+              where: {
+                type: "deposit",
+                status: "completed",
+              },
+              select: {
+                amount: true,
+                currency: true,
+              },
+            },
+            referredBy: {
+              select: {
+                account: {
+                  select: {
+                    username: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const tonDepositTotal = numberToString(
+      transaction.account.transactions
+        .filter((tx) => tx.currency === TransactionCurrency.ton)
+        .reduce((total, tx) => total + tx.amount, 0)
+    );
+    const starsDepositTotal = numberToString(
+      transaction.account.transactions
+        .filter((tx) => tx.currency === TransactionCurrency.star)
+        .reduce((total, tx) => total + tx.amount, 0)
+    );
+
+    const username = `@${transaction.account.username}`;
+    const data = {
+      username,
+      amount: `${numberToString(transaction.amount)} ${currency}`,
+      bonus: transaction.bonus?.value,
+      depositTotal: {
+        ton: tonDepositTotal,
+        stars: starsDepositTotal,
+      },
+      addressBalance: transaction.tonTransaction?.from
+        ? await tonService.getAddressBalance(transaction.tonTransaction.from)
+        : undefined,
+      referredBy: transaction.account.referredBy?.account.username,
+    };
+
+    const options: SendMessageOptions = {
+      parse_mode: "HTML",
+    };
+
+    const formattedJson = JSON.stringify(data, null, 2);
+    const message = `<b>${currency} deposit</b> ${username}\n<pre><code class="language-json">${formattedJson}</code></pre>`;
+    await this.bot.sendMessage(this.chatId, message, options);
+
+    return transaction;
+  }
+
+  public async successWithdrawNotification<
+    T extends { username: string; amount: string; id: string }
+  >(payload: T) {
+    const messageOptions: SendMessageOptions = {
+      parse_mode: "HTML",
+    };
+
+    const formattedJson = JSON.stringify(payload, null, 2);
+    const message = `✅ <b>Success withdraw @${payload.username} ${payload.amount}</b>\n<pre><code class="language-json">${formattedJson}</code></pre>`;
+    await this.bot.sendMessage(this.chatId, message, messageOptions);
+  }
+
+  public async failedWithdrawNotification<
+    T extends { username: string; amount: string; id: string }
+  >(payload: T) {
+    const messageOptions: SendMessageOptions = {
+      parse_mode: "HTML",
+    };
+
+    const formattedJson = JSON.stringify(payload, null, 2);
+    const message = `❌ <b>Failed withdraw @${payload.username} ${payload.amount}</b>\n<pre><code class="language-json">${formattedJson}</code></pre>`;
+    await this.bot.sendMessage(this.chatId, message, messageOptions);
+  }
+
+  public async internalErrorAlert(message: string) {
+    await this.bot.sendMessage(this.chatId, `⚠️ Error: ${message}`);
+  }
 }
+

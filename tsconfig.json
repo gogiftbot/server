@@ -6,7 +6,6 @@
     "rootDirs": ["src"],
     "baseUrl": ".",
     "paths": {
-      "@/generated/prisma": ["./generated/prisma/index"],
       "@/*": ["./src/*"]
     },
     "moduleResolution": "node",

@@ -1,11 +1,17 @@
 import express, { Request, Response, NextFunction } from "express";
 
-import botRouter from "./bot.router";
+import accountRouter from "./account.router";
+import casesRouter from "./cases.router";
+import giftRouter from "./gift.router";
+import paymentRouter from "./payment.router";
 
 const router = express.Router();
 
 export const initRouters = (context: Context): express.Router => {
-  router.use("/v1/bot", botRouter(context));
+  router.use("/account", accountRouter(context));
+  router.use("/cases", casesRouter(context));
+  router.use("/gift", giftRouter(context));
+  router.use("/payment", paymentRouter(context));
 
   return router;
 };
