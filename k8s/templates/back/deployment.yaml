@@ -25,7 +25,7 @@ spec:
         - name: "gogift-{{ .Release.Name }}-back"
           imagePullPolicy: "{{ .Values.back.pullPolicy }}"
           image: "{{ .Values.container.repository }}/{{ .Values.back.image }}:{{ .Values.back.tag }}"
-          command: ["/bin/bash", "-c", "pnpm start"]
+          command: ["/bin/bash", "-c", "pnpm start:www"]
           ports:
             - containerPort: {{ .Values.back.port }}
               protocol: TCP

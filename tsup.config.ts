@@ -4,7 +4,7 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: ["./src"],
-  outDir: "api",
+  outDir: "dist",
   splitting: false,
   clean: true,
   format: ["cjs"],

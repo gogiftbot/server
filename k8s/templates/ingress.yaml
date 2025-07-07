@@ -8,15 +8,15 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: "/$2"
-    # cert-manager.io/cluster-issuer: "caerus-1.0.0-ssl"
+    cert-manager.io/cluster-issuer: "gogift-1.0.0-ssl"
 
 spec:
   ingressClassName: nginx
 
-  # tls:
-  #   - hosts:
-  #       - {{ .Values.hostname }}
-  #     secretName: "caerus-1.0.0-ssl"
+  tls:
+    - hosts:
+        - {{ .Values.hostname }}
+      secretName: "gogift-1.0.0-ssl"
 
   rules:
     - host: {{ .Values.hostname }}

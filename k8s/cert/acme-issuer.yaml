@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: "gogift-1.0.0-ssl"
+spec:
+  acme:
+    email: mr.muraveiko@gmail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: "gogift-1.0.0-ssl"
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
