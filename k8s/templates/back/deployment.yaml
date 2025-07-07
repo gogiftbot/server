@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: "caerus-{{ .Release.Name }}-back"
+  labels:
+    app: "caerus-{{ .Release.Name }}-back"
+  annotations:
+    timestamp: {{ now | quote }}
+
+spec:
+  replicas: {{ .Values.back.replicas }}
+
+  selector:
+    matchLabels:
+      app: "caerus-{{ .Release.Name }}-back"
+
+  template:
+    metadata:
+      labels:
+        app: "caerus-{{ .Release.Name }}-back"
+
+    spec:
+      containers:
+        - name: "caerus-{{ .Release.Name }}-back"
+          imagePullPolicy: "{{ .Values.back.pullPolicy }}"
+          image: "{{ .Values.container.repository }}/{{ .Values.back.image }}:{{ .Values.back.tag }}"
+          command: ["/bin/bash", "-c", "pnpm start"]
+          ports:
+            - containerPort: {{ .Values.back.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: "caerus-{{ .Release.Name }}-back-config"
+          volumeMounts:
+            - name: "caerus-{{ .Release.Name }}-back-config-file"
+              mountPath: "/app/"
+              readOnly: true
+              subPath: ".env"
+      imagePullSecrets:
+        - name: github-registry-secret
+
+      volumes:
+        - name: "caerus-{{ .Release.Name }}-back-config-file"
+          configMap:
+            name: "caerus-{{ .Release.Name }}-back-config"

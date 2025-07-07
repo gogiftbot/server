@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: "caerus-{{ .Release.Name }}-back-config"
+  labels:
+    app: "caerus-{{ .Release.Name }}-back-config"
+
+data:
+  NODE_ENV: production
+
+  HOSTNAME: https://{{ .Values.hostname }}
+  PORT: "4000"
+
+  BOT_API_KEY: "BOT_API_KEY"
+  TON_ADDRESS: "TON_ADDRESS"
+  TON_MNEMONIC: "TON_MNEMONIC"
+  TON_API_KEY: "TON_API_KEY"
+  TON_CENTER_API_KEY: "be351acde3a088630eea2753fd3f61771c0c96c4e16d6a8973cbae84fd3ef7fd"
+  CRYPTO_COMPARE_API_KEY: "41b87d7ebb1b3df45e7cdcad09707425a8a1792cb4a55bb3a7cf763cb3a60788"
+
+  DATABASE_URL: "postgresql://dev_user:dev_password@postgres:5432/dev"
+  DATABASE_URL: "postgresql://dev_user:dev_password@postgres:5432/production"
+  SHADOW_DATABASE_URL: "postgresql://dev_user:dev_password@postgres:5432/production_shadow"

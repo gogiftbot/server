@@ -1,0 +1,6 @@
+apiVersion: v2
+name: gogift
+description: K8S HELM
+type: application
+version: 0.1.0
+appVersion: "1.2.0"

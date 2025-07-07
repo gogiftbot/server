@@ -6,6 +6,8 @@ export async function GiftSell(prisma: Context['prisma'], acc: Express.Request['
       },
     });
 
+    await tx.$executeRaw`SELECT * FROM account_gifts WHERE id = ${payload.accountGiftId} FOR UPDATE`;
+
     const accountGift = await tx.account_gift.findFirstOrThrow({
       where: {
         id: payload.accountGiftId,
@@ -14,8 +16,7 @@ export async function GiftSell(prisma: Context['prisma'], acc: Express.Request['
         isWithdraw: false,
       },
     });
-
-    await tx.$executeRaw`SELECT * FROM account_gifts WHERE id = ${accountGift.id} FOR UPDATE`;
+  
 
     await tx.account_gift.update({
       where: {
