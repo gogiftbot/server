@@ -1,7 +1,7 @@
 
 import { onTextCallback } from "./utils";
 import { ReferralService } from "../referral.service";
-import { config } from "../config.service";
+import { config } from '@/config'
 
 export const createRef = onTextCallback(async ({}, {prisma}) => {
   const referral = await prisma.$transaction(async (tx) => {
@@ -27,7 +27,7 @@ export const createRef = onTextCallback(async ({}, {prisma}) => {
 
   const data = {
     value: referral.value,
-    link: `t.me/${config.BOT_NAME}?startapp=${referral.value}`,
+    link: `t.me/${config.bot.name}?startapp=${referral.value}`,
   };
 
   return data;

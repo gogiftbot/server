@@ -7,7 +7,7 @@ import {
   TransactionStatus,
   TransactionType,
 } from "@prisma/client";
-import { config } from "../config.service";
+import { config } from '@/config'
 import { BotService } from "../bot.service";
 import { numberToString } from "@/utils/number"
 
@@ -21,14 +21,14 @@ type DepositTX = {
 };
 
 export class TonService {
-  private readonly address = Address.parse(config.TON_ADDRESS);
+  private readonly address = Address.parse(config.ton.address);
   public readonly tonApi = new TonApiClient({
     baseUrl: "https://tonapi.io",
-    apiKey: config.TON_API_KEY,
+    apiKey: config.ton.apiKey,
   });
   public readonly tonClient = new TonClient({
     endpoint: "https://toncenter.com/api/v2/jsonRPC",
-    apiKey: config.TON_CENTER_API_KEY,
+    apiKey: config.ton.center.apiKey,
   });
 
 
@@ -253,7 +253,7 @@ export class TonService {
 
   public async send(payload: { amount: number; address: string }) {
     try {
-      const mnemonic = config.TON_MNEMONIC.split(" ");
+      const mnemonic = config.ton.mnemonic.split(" ");
       const keyPair = await mnemonicToPrivateKey(mnemonic);
       const walletContract = WalletContractV5R1.create({
         publicKey: keyPair.publicKey,
@@ -297,7 +297,7 @@ export class TonService {
 
     url.searchParams.append("fsym", "TON");
     url.searchParams.append("tsyms", "USD");
-    url.searchParams.append("api_key", config.CRYPTO_COMPARE_API_KEY);
+    url.searchParams.append("api_key", config.ton.crypto.apiKey);
 
     const response = await fetch(url, {
       method: "GET",

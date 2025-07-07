@@ -2,7 +2,7 @@
 node_modules/
 api/
 generated/
+dist/
 .env
-
 
 .vercel

@@ -7,7 +7,7 @@ import {
   TransactionType,
 } from "@prisma/client";
 import { tonService } from "../ton.service";
-import { config } from "../config.service";
+import { config } from '@/config'
 import { numberToString } from "@/utils/number";
 import { updateCasePrice } from "./updateCasePrice";
 import { getCasesPrices } from "./getCasesPrices";
@@ -39,7 +39,7 @@ export class BotService {
 
 
   constructor(private readonly prisma: Context['prisma'], polling = false) {
-    this.bot = new TelegramBot(config.BOT_API_KEY, {
+    this.bot = new TelegramBot(config.bot.apiKey, {
       polling: polling
         ? {
           interval: 1000,

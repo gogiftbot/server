@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { config } from "@/services/config.service";
+import { config } from '@/config'
 import { AccountService } from "@/services/account.service";
 import { codeToLanguage } from "@/utils/language";
 
@@ -13,7 +13,7 @@ function checkTelegramAuth(initData: string) {
 
   const secretKey = crypto
     .createHmac("sha256", "WebAppData")
-    .update(config.BOT_API_KEY)
+    .update(config.bot.apiKey)
     .digest();
   const computedHash = crypto
     .createHmac("sha256", secretKey)

@@ -1,7 +1,7 @@
 import { Language, transaction } from "@prisma/client";
 import { numberToString } from "@/utils/number";
 import TelegramBot from "node-telegram-bot-api";
-import { config } from "../config.service";
+import { config } from '@/config'
 
 const WelcomeMessageByLanguage: Record<Language, string> = {
   [Language.EN]: `you are a legend! 🎉
@@ -38,7 +38,7 @@ export const welcomeMessageOptions = (
         [
           {
             text: startText,
-            url: `https://t.me/${config.BOT_NAME}${
+            url: `https://t.me/${config.bot.name}${
               referral ? `?startapp=${referral}` : ""
             }`,
           },
