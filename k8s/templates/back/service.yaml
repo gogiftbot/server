@@ -2,15 +2,15 @@ apiVersion: v1
 kind: Service
 
 metadata:
-  name: "caerus-{{ .Release.Name }}-back"
+  name: "gogift-{{ .Release.Name }}-back"
   labels:
-    app: "caerus-{{ .Release.Name }}-back"
+    app: "gogift-{{ .Release.Name }}-back"
 
 spec:
   type: {{ .Values.back.type }}
 
   selector:
-    app: "caerus-{{ .Release.Name }}-back"
+    app: "gogift-{{ .Release.Name }}-back"
 
   ports:
     - protocol: TCP

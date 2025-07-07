@@ -25,7 +25,7 @@ export const env = envSchema.parse(process.env);
 
 const config = {
   HOSTNAME: env.HOSTNAME,
-  host: `${env.HOSTNAME}/api/v1`,
+  host: `${env.HOSTNAME}/api`,
   PORT: env.PORT,
   bot: {
     apiKey: env.BOT_API_KEY,

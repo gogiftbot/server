@@ -4,9 +4,9 @@
   "description": "",
   "scripts": {
     "cli": "tsx src/cli/index.ts",
-    "build": "prisma generate && tsup",
+    "build": "tsup",
     "tsc:build": "tsc -p .",
-    "start": "node api/index.js",
+    "start:www": "node dist/bin/www.js",
     "dev": "tsx src/bin/www.ts",
     "postinstall": "prisma generate"
   },

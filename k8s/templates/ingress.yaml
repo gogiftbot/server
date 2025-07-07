@@ -2,9 +2,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 
 metadata:
-  name: "caerus-{{ .Release.Name }}-ingress"
+  name: "gogift-{{ .Release.Name }}-ingress"
   labels:
-    app: "caerus-{{ .Release.Name }}-ingress"
+    app: "gogift-{{ .Release.Name }}-ingress"
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: "/$2"
@@ -26,13 +26,6 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service:
-                name: "caerus-{{ .Release.Name }}-back"
+                name: "gogift-{{ .Release.Name }}-back"
                 port:
                   number: {{ .Values.back.port }}
-          # - path: /()(.*)
-          #   pathType: ImplementationSpecific
-          #   backend:
-          #     service:
-          #       name: "caerus-{{ .Release.Name }}-frontend"
-          #       port:
-          #         number: {{ .Values.front.port }}
