@@ -17,8 +17,6 @@ const corsOptions: cors.CorsOptions = {
   optionsSuccessStatus: 204,
 };
 
-new BotService(context.prisma, true).listen()
-
 const app = express();
 const server = http.createServer(app);
 
@@ -45,6 +43,7 @@ const PORT = config.PORT;
 
 server.listen({ port: PORT }, () => {
   console.log(`🚀 HTTP server listening at: http://localhost:${PORT}`);
+  new BotService(context.prisma, true).listen()
 });
 
 onShutdown(async () => {
