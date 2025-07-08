@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: "gogift-{{ .Release.Name }}-back"
+  name: "dev-{{ .Release.Name }}-back"
   labels:
-    app: "gogift-{{ .Release.Name }}-back"
+    app: "dev-{{ .Release.Name }}-back"
   annotations:
     timestamp: {{ now | quote }}
 
@@ -13,16 +13,16 @@ spec:
 
   selector:
     matchLabels:
-      app: "gogift-{{ .Release.Name }}-back"
+      app: "dev-{{ .Release.Name }}-back"
 
   template:
     metadata:
       labels:
-        app: "gogift-{{ .Release.Name }}-back"
+        app: "dev-{{ .Release.Name }}-back"
 
     spec:
       containers:
-        - name: "gogift-{{ .Release.Name }}-back"
+        - name: "dev-{{ .Release.Name }}-back"
           imagePullPolicy: "{{ .Values.back.pullPolicy }}"
           image: "{{ .Values.container.repository }}/{{ .Values.back.image }}:{{ .Values.back.tag }}"
           command: ["/bin/bash", "-c", "pnpm start:www"]
@@ -31,14 +31,14 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: "gogift-{{ .Release.Name }}-back-config"
+                name: "dev-{{ .Release.Name }}-back-config"
           volumeMounts:
-            - name: "gogift-{{ .Release.Name }}-back-config-file"
+            - name: "dev-{{ .Release.Name }}-back-config-file"
               mountPath: "/app/"
               readOnly: true
               subPath: ".env"
 
       volumes:
-        - name: "gogift-{{ .Release.Name }}-back-config-file"
+        - name: "dev-{{ .Release.Name }}-back-config-file"
           configMap:
-            name: "gogift-{{ .Release.Name }}-back-config"
+            name: "dev-{{ .Release.Name }}-back-config"

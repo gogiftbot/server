@@ -1,23 +1,19 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-
 metadata:
-  name: "gogift-{{ .Release.Name }}-ingress"
+  name: "dev-{{ .Release.Name }}-ingress"
   labels:
-    app: "gogift-{{ .Release.Name }}-ingress"
+    app: "dev-{{ .Release.Name }}-ingress"
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: "/$2"
     cert-manager.io/cluster-issuer: "letsencrypt-production"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-
 spec:
-  ingressClassName: nginx
   tls:
     - hosts:
         - {{ .Values.hostname }}
-      secretName: gogift-tls
-
+      secretName: dev-tls
   rules:
     - host: {{ .Values.hostname }}
       http:
@@ -26,6 +22,6 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service:
-                name: "gogift-{{ .Release.Name }}-back"
+                name: "dev-{{ .Release.Name }}-back"
                 port:
                   number: {{ .Values.back.port }}

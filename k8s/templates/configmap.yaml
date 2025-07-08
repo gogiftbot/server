@@ -2,9 +2,9 @@ apiVersion: v1
 kind: ConfigMap
 
 metadata:
-  name: "gogift-{{ .Release.Name }}-back-config"
+  name: "dev-{{ .Release.Name }}-back-config"
   labels:
-    app: "gogift-{{ .Release.Name }}-back-config"
+    app: "dev-{{ .Release.Name }}-back-config"
 
 data:
   NODE_ENV: production
