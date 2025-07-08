@@ -9,12 +9,12 @@ back:
   replicas: 1
   type: ClusterIP
   port: 4000
-  tag: release-2.0.2
+  tag: release-2.0.21
 
-# front:
-#   image: web
-#   pullPolicy: "Always"
-#   replicas: 1
-#   type: ClusterIP
-#   port: 3000
-#   tag: release-1.1.9-1
+front:
+  image: web
+  pullPolicy: "Always"
+  replicas: 1
+  type: ClusterIP
+  port: 3000
+  tag: release-2.0.21

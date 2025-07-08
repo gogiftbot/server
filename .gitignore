@@ -4,5 +4,6 @@ api/
 generated/
 dist/
 .env
+*.pgdump
 
 .vercel

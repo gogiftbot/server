@@ -13,5 +13,10 @@ export const initRouters = (context: Context): express.Router => {
   router.use("/gift", giftRouter(context));
   router.use("/payment", paymentRouter(context));
 
+  router.get("/healthcheck", async (req, res) => {
+    await context.prisma.$queryRaw`SELECT 1`;
+    return res.send("ok");
+  });
+
   return router;
 };

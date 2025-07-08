@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: "dev-{{ .Release.Name }}-front"
+  labels:
+    app: "dev-{{ .Release.Name }}-front"
+  annotations:
+    timestamp: {{ now | quote }}
+
+spec:
+  replicas: {{ .Values.front.replicas }}
+
+  selector:
+    matchLabels:
+      app: "dev-{{ .Release.Name }}-front"
+
+  template:
+    metadata:
+      labels:
+        app: "dev-{{ .Release.Name }}-front"
+
+    spec:
+      containers:
+        - name: "dev-{{ .Release.Name }}-front"
+          imagePullPolicy: {{ .Values.front.pullPolicy }}
+          image: "{{ .Values.container.repository }}/{{ .Values.front.image }}:{{ .Values.front.tag }}"
+          ports:
+            - containerPort:  {{ .Values.front.port }}
+              protocol: TCP
