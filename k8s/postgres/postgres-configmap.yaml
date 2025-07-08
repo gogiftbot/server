@@ -5,6 +5,6 @@ metadata:
   labels:
     app: postgres
 data:
-  POSTGRES_DB: dev
-  POSTGRES_USER: dev_user
-  POSTGRES_PASSWORD: dev_password
+  POSTGRES_DB: gg_db
+  POSTGRES_USER: gg_user
+  POSTGRES_PASSWORD: gg_password

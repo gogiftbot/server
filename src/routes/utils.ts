@@ -18,6 +18,7 @@ export const routeWrapper =
   (req: express.Request, res: express.Response, _next: express.NextFunction) =>
     callback(req, res)
       .catch((ex: Error) => {
+        console.log(ex);
         return new ServiceResponse(
           ResponseStatus.Failed,
           ex.message,
