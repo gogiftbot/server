@@ -8,12 +8,17 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`{{ .Values.hostname }}`) && PathPrefix(`/api`)
+    - match: Host(`{{ .Values.hostname }}`) && PathPrefix(`/go`)
       kind: Rule
       services:
         - name: "dev-{{ .Release.Name }}-back"
           port: {{ .Values.back.port }}
       middlewares:
         - name: "{{ .Release.Name }}-strip-api"
+    - match: Host(`{{ .Values.hostname }}`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: "dev-{{ .Release.Name }}-front"
+          port: {{ .Values.front.port }}
   tls:
     secretName: dev-tls
