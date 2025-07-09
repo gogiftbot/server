@@ -38,7 +38,7 @@ export const welcomeMessageOptions = (
         [
           {
             text: startText,
-            url: `https://t.me/${config.bot.name}`,
+            url: `https://t.me/${config.bot.name}?startapp`,
           },
         ],
         [
