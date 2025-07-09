@@ -23,7 +23,7 @@ spec:
         - name: "dev-{{ .Release.Name }}-back-bot"
           imagePullPolicy: "{{ .Values.back.pullPolicy }}"
           image: "{{ .Values.container.repository }}/{{ .Values.back.image }}:{{ .Values.back.tag }}"
-          command: ["/bin/bash", "-c", "pnpm cli ws"]
+          command: ["/bin/bash", "-c", "pnpm start:bot"]
           ports:
             - containerPort: {{ .Values.back.port }}
               protocol: TCP

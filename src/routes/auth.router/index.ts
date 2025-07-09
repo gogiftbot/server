@@ -6,7 +6,7 @@ import {
   validateRequest,
   routeWrapper,
 } from "../utils";
-import { Authtelegram } from './auth.telegram'
+import { Authtelegram } from "./auth.telegram";
 import {
   ResponseStatus,
   ServiceResponse,
@@ -15,7 +15,7 @@ import {
 
 const callback: Callback = (router, context) => {
   router.post(
-    "/telegarm",
+    "/telegram",
     validateRequest(
       z.object({
         body: z.object({
