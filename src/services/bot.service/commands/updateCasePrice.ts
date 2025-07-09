@@ -1,12 +1,12 @@
-import { onTextCallback } from "./utils";
-import { tonService } from "../ton.service";
+import { onTextCallback } from "../utils";
+import { tonService } from "@/services/ton.service";
 
 export const updateCasePrice = onTextCallback(
   async (payload, { bot, chatId, prisma }) => {
     if (!payload.match || !payload.match[1] || !payload.match[2]) {
       bot.sendMessage(
         chatId,
-        "Некорректный формат команды. Используйте: /update {title} {price}"
+        "Некорректный формат команды. Используйте: /update {title} {price}",
       );
       return;
     }
@@ -36,7 +36,7 @@ export const updateCasePrice = onTextCallback(
     if (!g_case) {
       await bot.sendMessage(
         chatId,
-        `Кейс с таким названием не найден (${title})`
+        `Кейс с таким названием не найден (${title})`,
       );
       return;
     }
@@ -70,5 +70,5 @@ export const updateCasePrice = onTextCallback(
     });
 
     return updated;
-  }
+  },
 );

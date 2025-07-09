@@ -1,11 +1,11 @@
-import { onTextCallback } from "./utils";
+import { onTextCallback } from "../utils";
 
-export const unblockAccount = onTextCallback(
+export const blockAccount = onTextCallback(
   async (payload, { bot, chatId, prisma }) => {
     if (!payload.match || !payload.match[1]) {
       bot.sendMessage(
         chatId,
-        "Некорректный формат команды. Используйте: /unblock '{username}'"
+        "Некорректный формат команды. Используйте: /block '{username}'",
       );
       return;
     }
@@ -33,7 +33,7 @@ export const unblockAccount = onTextCallback(
     if (!account) {
       await bot.sendMessage(
         chatId,
-        `Пользователь с таким username не найден (${username})`
+        `Пользователь с таким username не найден (${username})`,
       );
       return;
     }
@@ -43,13 +43,13 @@ export const unblockAccount = onTextCallback(
         id: account.id,
       },
       data: {
-        isBlocked: false,
+        isBlocked: true,
       },
     });
 
     return {
       username: account.username,
-      isBlocked: false,
+      isBlocked: true,
     };
-  }
+  },
 );

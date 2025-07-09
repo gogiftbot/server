@@ -1,13 +1,17 @@
-import { TransactionStatus, TransactionType } from '@prisma/client'
-import {
-  AccountService,
-} from "@/services/account.service";
+import { TransactionStatus, TransactionType } from "@prisma/client";
+import { AccountService } from "@/services/account.service";
 
-export async function GiftWithdraw(prisma: Context['prisma'], acc: Express.Request['account'], payload: { accountGiftId: string; }) {
+export async function GiftWithdraw(
+  prisma: Context["prisma"],
+  acc: Express.Request["account"],
+  payload: { accountGiftId: string },
+) {
   const transaction = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT * FROM account_gifts WHERE id = ${payload.accountGiftId} FOR UPDATE`;
+
     const account = await tx.account.findUniqueOrThrow({
       where: {
-        id: acc?.id
+        id: acc?.id,
       },
     });
 
@@ -21,8 +25,6 @@ export async function GiftWithdraw(prisma: Context['prisma'], acc: Express.Reque
         isWithdraw: false,
       },
     });
-
-    await tx.$executeRaw`SELECT * FROM account_gifts WHERE id = ${accountGift.id} FOR UPDATE`;
 
     await tx.account_gift.update({
       where: {

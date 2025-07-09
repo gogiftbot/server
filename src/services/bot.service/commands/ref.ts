@@ -1,7 +1,7 @@
-import { onTextCallback } from "./utils";
+import { onTextCallback } from "../utils";
 import { numberToString } from "@/utils/number";
 
-export const ref = onTextCallback(async ({}, {prisma}) => {
+export const ref = onTextCallback(async ({}, { prisma }) => {
   const accounts = await prisma.account.findMany({
     select: {
       id: true,
@@ -54,7 +54,7 @@ export const ref = onTextCallback(async ({}, {prisma}) => {
         (tx) =>
           tx.status === "completed" &&
           tx.type === "deposit" &&
-          tx.currency === "ton"
+          tx.currency === "ton",
       )
       .reduce((t, tx) => t + tx.amount, obj[username].ton);
     const star = acc.transactions
@@ -63,7 +63,7 @@ export const ref = onTextCallback(async ({}, {prisma}) => {
           (tx.status === "completed" || tx.status === "pending") &&
           tx.type === "deposit" &&
           tx.currency === "star" &&
-          !!tx.account_giftId
+          !!tx.account_giftId,
       )
       .reduce((t, tx) => t + tx.amount, obj[username].star);
 

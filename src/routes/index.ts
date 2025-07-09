@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 
 import accountRouter from "./account.router";
 import authRouter from "./auth.router";
@@ -15,7 +15,7 @@ export const initRouters = (context: Context): express.Router => {
   router.use("/gift", giftRouter(context));
   router.use("/payment", paymentRouter(context));
 
-  router.get("/healthcheck", async (req, res) => {
+  router.get("/healthcheck", async (_req, res) => {
     await context.prisma.$queryRaw`SELECT 1`;
     return res.send("ok");
   });

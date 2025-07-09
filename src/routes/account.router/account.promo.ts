@@ -1,7 +1,13 @@
-import { BonusType } from '@prisma/client'
+import { BonusType } from "@prisma/client";
 
-export async function AccountPromo(prisma: Context['prisma'], acc: Express.Request['account'], payload: { value: string }) {
+export async function AccountPromo(
+  prisma: Context["prisma"],
+  acc: Express.Request["account"],
+  payload: { value: string },
+) {
   const bonus = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT * FROM bonuses WHERE account_id = ${acc?.id} FOR UPDATE`;
+
     const account = await tx.account.findUniqueOrThrow({
       where: {
         id: acc?.id,
@@ -10,8 +16,6 @@ export async function AccountPromo(prisma: Context['prisma'], acc: Express.Reque
         bonuses: true,
       },
     });
-
-    await tx.$executeRaw`SELECT * FROM bonuses WHERE account_id = ${account.id} FOR UPDATE`;
 
     const promo = await tx.promo_code.findUnique({
       where: {
@@ -63,5 +67,4 @@ export async function AccountPromo(prisma: Context['prisma'], acc: Express.Reque
   });
 
   return bonus;
-
 }

@@ -1,9 +1,8 @@
+import { onTextCallback } from "../utils";
+import { ReferralService } from "@/services/referral.service";
+import { config } from "@/config";
 
-import { onTextCallback } from "./utils";
-import { ReferralService } from "../referral.service";
-import { config } from '@/config'
-
-export const createRef = onTextCallback(async ({}, {prisma}) => {
+export const createRef = onTextCallback(async ({}, { prisma }) => {
   const referral = await prisma.$transaction(async (tx) => {
     const referralService = new ReferralService();
 

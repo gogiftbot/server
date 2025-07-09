@@ -1,7 +1,7 @@
 import { Language, transaction } from "@prisma/client";
 import { numberToString } from "@/utils/number";
 import TelegramBot from "node-telegram-bot-api";
-import { config } from '@/config'
+import { config } from "@/config";
 
 const WelcomeMessageByLanguage: Record<Language, string> = {
   [Language.EN]: `you are a legend! 🎉
@@ -16,7 +16,7 @@ const WelcomeMessageByLanguage: Record<Language, string> = {
 
 export const welcomeMessage = (
   name: string,
-  language: Language = Language.EN
+  language: Language = Language.EN,
 ) =>
   `🎉 ${name.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, "\\$1")}, ${
     WelcomeMessageByLanguage[language]
@@ -24,7 +24,7 @@ export const welcomeMessage = (
 
 export const welcomeMessageOptions = (
   language: Language,
-  referral?: string
+  referral?: string,
 ): TelegramBot.SendMessageOptions => {
   const startText = language === Language.RU ? "Начать" : "Start";
   const joinChannelText =
@@ -38,9 +38,7 @@ export const welcomeMessageOptions = (
         [
           {
             text: startText,
-            url: `https://t.me/${config.bot.name}${
-              referral ? `?startapp=${referral}` : ""
-            }`,
+            url: `https://t.me/${config.bot.name}`,
           },
         ],
         [
@@ -64,12 +62,12 @@ export const depositTransactionMessage = (language: Language) => {
   if (language === Language.RU)
     return (transaction: Pick<transaction, "amount">) =>
       `✅ Транзакция завершена! ${numberToString(
-        transaction.amount
+        transaction.amount,
       )} TON успешно зачислено на ваш баланс.`;
 
   return (transaction: Pick<transaction, "amount">) =>
     `✅ Transaction complete. Amount of ${numberToString(
-      transaction.amount
+      transaction.amount,
     )} TON has been added to your balance.`;
 };
 
@@ -77,13 +75,13 @@ export const successTransactionMessage = (language: Language) => {
   if (language === Language.RU) {
     return (transaction: Pick<transaction, "amount" | "address">) =>
       `✅ Транзакция создана! ${numberToString(
-        transaction.amount
+        transaction.amount,
       )} TON отправлено на ваш кошелёк (${transaction.address}).`;
   }
 
   return (transaction: Pick<transaction, "amount" | "address">) =>
     `✅ Transaction created! Amount of ${numberToString(
-      transaction.amount
+      transaction.amount,
     )} TON has been send to your wallet (${transaction.address}).`;
 };
 
@@ -91,13 +89,13 @@ export const failedTransactionMessage = (language: Language) => {
   if (language === Language.RU) {
     return (transaction: Pick<transaction, "amount">) =>
       `❌ Транзакция отклонена! ${numberToString(
-        transaction.amount
+        transaction.amount,
       )} TON зачислены на ваш баланс.`;
   }
 
   return (transaction: Pick<transaction, "amount">) =>
     `❌ Transaction Declined! Amount of ${numberToString(
-      transaction.amount
+      transaction.amount,
     )} TON has been added to your balance.`;
 };
 
@@ -112,4 +110,20 @@ export const failedGiftTransactionMessage = (language: Language) => {
     `⚠️ Gift${
       title ? ` (${title})` : ""
     } withdraw Declined! We've returned it to your inventory. Review the withdrawal terms.`;
+};
+
+export const paySupportMessage = (language: Language) => {
+  if (language === Language.RU) {
+    return `ℹ️ Важная информация:
+Согласно нашей политике, после открытия кейса (получения содержимого) возврат средств не предусмотрен.
+
+Если у вас возникли вопросы по оплате, статусу заказа или работе сервиса — наша команда поддержки всегда готова помочь!
+📨 Пишите нам: @GoGift_Support`;
+  }
+
+  return `ℹ️ Important Information:
+According to our policy, refunds are not provided after the case has been opened (contents received).
+
+If you have any questions regarding payment, order status, or the service — our support team is always ready to help!
+📨 Contact us: @GoGift_Support`;
 };

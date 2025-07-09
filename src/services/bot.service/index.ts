@@ -1,4 +1,5 @@
 import TelegramBot, { SendMessageOptions } from "node-telegram-bot-api";
+import retry from "async-retry";
 import {
   Language,
   transaction,
@@ -6,30 +7,30 @@ import {
   TransactionStatus,
   TransactionType,
 } from "@prisma/client";
-import { tonService } from "../ton.service";
-import { config } from '@/config'
+import { config } from "@/config";
 import { numberToString } from "@/utils/number";
-import { updateCasePrice } from "./updateCasePrice";
-import { getCasesPrices } from "./getCasesPrices";
-import { createRef } from "./createRef";
-import { ref } from "./ref";
-import { stat } from "./stat";
 import { codeToLanguage } from "@/utils/language";
+import { tonService } from "../ton.service";
+import { updateCasePrice } from "./commands/updateCasePrice";
+import { getCasesPrices } from "./commands/getCasesPrices";
+import { createRef } from "./commands/createRef";
+import { ref } from "./commands/ref";
+import { stat } from "./commands/stat";
+import { createPromo } from "./commands/createPromo";
+import { marketplaceService } from "../marketplace.service";
+import { incrementBalance } from "./commands/incrementBalance";
+import { getAccount } from "./commands/account";
+import { updateRef } from "./commands/updateRef";
+import { createPromoCase } from "./commands/createPromoCase";
+import { blockAccount } from "./commands/block";
+import { unblockAccount } from "./commands/unblock";
 import {
   depositTransactionMessage,
   failedGiftTransactionMessage,
+  paySupportMessage,
   welcomeMessage,
   welcomeMessageOptions,
 } from "./messages";
-import { createPromo } from "./createPromo";
-import { marketplaceService } from "../marketplace.service";
-import { incrementBalance } from "./incrementBalance";
-import { getAccount } from "./account";
-import { updateRef } from "./updateRef";
-import { createPromoCase } from "./createPromoCase";
-import retry from "async-retry";
-import { blockAccount } from "./block";
-import { unblockAccount } from "./unblock";
 
 const welcomeMessageImage = "https://gogift.vercel.app/start_image.png";
 
@@ -37,13 +38,15 @@ export class BotService {
   public chatId = "-1002657439097";
   public bot: TelegramBot;
 
-
-  constructor(private readonly prisma: Context['prisma'], polling = false) {
+  constructor(
+    private readonly prisma: Context["prisma"],
+    polling = false,
+  ) {
     this.bot = new TelegramBot(config.bot.apiKey, {
       polling: polling
         ? {
-          interval: 1000,
-        }
+            interval: 1000,
+          }
         : false,
     });
   }
@@ -70,13 +73,18 @@ export class BotService {
           select: { id: true },
         });
 
-        await this.bot.answerPreCheckoutQuery(query.id, true).catch((e) => { });
+        await this.bot.answerPreCheckoutQuery(query.id, true).catch((e) => {});
+
+        await this.onTransaction(
+          payload.transactionId,
+          TransactionCurrency.star,
+        );
       } catch (error) {
         await this.bot
           .answerPreCheckoutQuery(query.id, false, {
             error_message: "error",
           })
-          .catch((e) => { });
+          .catch((e) => {});
       }
     });
 
@@ -105,63 +113,60 @@ export class BotService {
               status: TransactionStatus.completed,
             },
           });
-
-          await this.onTransaction(
-            payload.transactionId,
-            TransactionCurrency.star
-          );
-        } catch (error) { }
+        } catch (error) {}
       }
     });
 
     this.bot.onText(/\/update\s+['"]([^'"]+)['"]\s+([\d.]+)/, async (...args) =>
-      updateCasePrice(...args, this.bot, this.chatId, this.prisma)
+      updateCasePrice(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(/\/promo\s+['"]([^'"]+)['"]\s+([\d.]+)/, async (...args) =>
-      createPromo(...args, this.bot, this.chatId, this.prisma)
+      createPromo(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(
       /\/promo_case\s+['"]([^'"]+)['"]\s+([\d.]+)/,
-      async (...args) => createPromoCase(...args, this.bot, this.chatId, this.prisma)
+      async (...args) =>
+        createPromoCase(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(
       /\/add_balance\s+['"]([^'"]+)['"]\s+([\d.]+)/,
-      async (...args) => incrementBalance(...args, this.bot, this.chatId, this.prisma)
+      async (...args) =>
+        incrementBalance(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(/\/account\s+['"]([^'"]+)['"]/, async (...args) =>
-      getAccount(...args, this.bot, this.chatId, this.prisma)
+      getAccount(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(/\/block\s+['"]([^'"]+)['"]/, async (...args) =>
-      blockAccount(...args, this.bot, this.chatId, this.prisma)
+      blockAccount(...args, this.bot, this.chatId, this.prisma),
     );
     this.bot.onText(/\/unblock\s+['"]([^'"]+)['"]/, async (...args) =>
-      unblockAccount(...args, this.bot, this.chatId, this.prisma)
+      unblockAccount(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(/\/case_price/, async (...args) =>
-      getCasesPrices(...args, this.bot, this.chatId, this.prisma)
+      getCasesPrices(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(/\/ref/, async (...args) =>
-      ref(...args, this.bot, this.chatId, this.prisma)
+      ref(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(/\/stat/, async (...args) =>
-      stat(...args, this.bot, this.chatId, this.prisma)
+      stat(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(/\/create_ref/, async (...args) =>
-      createRef(...args, this.bot, this.chatId, this.prisma)
+      createRef(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(
       /\/update_ref\s+['"]([^'"]+)['"]\s+([\d.]+)/,
-      async (...args) => updateRef(...args, this.bot, this.chatId, this.prisma)
+      async (...args) => updateRef(...args, this.bot, this.chatId, this.prisma),
     );
 
     this.bot.onText(/\/start/, async (message) => {
@@ -191,6 +196,19 @@ export class BotService {
           caption: welcomeMessage(name, language),
           ...welcomeMessageOptions(language, account?.referral?.value),
         });
+      } catch (error) {
+        console.error((error as Error).message);
+      }
+    });
+
+    this.bot.onText(/\/paysupport/, async (message) => {
+      try {
+        const language = codeToLanguage(message.from?.language_code);
+
+        await this.bot.sendMessage(
+          message.chat.id,
+          paySupportMessage(language),
+        );
       } catch (error) {
         console.error((error as Error).message);
       }
@@ -353,7 +371,7 @@ export class BotService {
                 },
                 {
                   retries: 3,
-                }
+                },
               );
 
               return transaction;
@@ -364,7 +382,7 @@ export class BotService {
               "✅ Success!",
               {
                 reply_to_message_id: callbackQuery.message.message_id,
-              }
+              },
             );
           } catch (error) {
             const message = (error as Error).message;
@@ -409,10 +427,10 @@ export class BotService {
                     .sendMessage(
                       transaction.account.telegramId,
                       failedGiftTransactionMessage(language)(
-                        transaction.accountGift?.nft.title
-                      )
+                        transaction.accountGift?.nft.title,
+                      ),
                     )
-                    .catch(() => { });
+                    .catch(() => {});
                 }
               });
             }
@@ -422,7 +440,7 @@ export class BotService {
               `⚠️ Error: ${message}`,
               {
                 reply_to_message_id: callbackQuery.message?.message_id,
-              }
+              },
             );
           }
         }
@@ -477,17 +495,17 @@ export class BotService {
                 .sendMessage(
                   transaction.account.telegramId,
                   failedGiftTransactionMessage(language)(
-                    transaction.accountGift?.nft.title
-                  )
+                    transaction.accountGift?.nft.title,
+                  ),
                 )
-                .catch(() => { });
+                .catch(() => {});
             }
 
             await this.bot
               .sendMessage(callbackQuery.message.chat.id, "❌ Declined!", {
                 reply_to_message_id: callbackQuery.message.message_id,
               })
-              .catch(() => { });
+              .catch(() => {});
           } catch (error) {
             await this.bot
               .sendMessage(
@@ -495,9 +513,9 @@ export class BotService {
                 `⚠️ Error: ${(error as Error).message}`,
                 {
                   reply_to_message_id: callbackQuery.message?.message_id,
-                }
+                },
               )
-              .catch(() => { });
+              .catch(() => {});
           }
         }
       } catch (error) {
@@ -565,7 +583,7 @@ export class BotService {
       },
       {
         timeout: 15_000,
-      }
+      },
     );
 
     return transaction;
@@ -574,16 +592,16 @@ export class BotService {
   public async onDeposit(payload: { transactionId: string }) {
     const transaction = await this.onTransaction(
       payload.transactionId,
-      TransactionCurrency.ton
+      TransactionCurrency.ton,
     );
 
     if (transaction.account.telegramId) {
       await this.bot
         .sendMessage(
           transaction.account.telegramId,
-          depositTransactionMessage(transaction.account.language)(transaction)
+          depositTransactionMessage(transaction.account.language)(transaction),
         )
-        .catch(() => { });
+        .catch(() => {});
     }
   }
 
@@ -654,7 +672,7 @@ export class BotService {
     const foo = (
       type: TransactionType,
       currency: TransactionCurrency,
-      txs: transaction[] = []
+      txs: transaction[] = [],
     ) =>
       numberToString(
         txs
@@ -662,13 +680,13 @@ export class BotService {
             (tx) =>
               tx.status === TransactionStatus.completed &&
               tx.type === type &&
-              tx.currency === currency
+              tx.currency === currency,
           )
-          .reduce((total, tx) => total + tx.amount, 0)
+          .reduce((total, tx) => total + tx.amount, 0),
       );
 
     const referralTransactions = transaction.account.referral?.accounts.flatMap(
-      (acc) => acc.transactions
+      (acc) => acc.transactions,
     );
 
     const username = `@${transaction.account.username}`;
@@ -680,13 +698,16 @@ export class BotService {
       username,
       balance: numberToString(transaction.account.balance),
       inventory: numberToString(
-        transaction.account.gifts.reduce((total, gift) => total + gift.price, 0)
+        transaction.account.gifts.reduce(
+          (total, gift) => total + gift.price,
+          0,
+        ),
       ),
       deposit: {
         ton: foo(
           TransactionType.deposit,
           TransactionCurrency.ton,
-          transaction.account.transactions
+          transaction.account.transactions,
         ),
         star: transaction.account.transactions
           .filter(
@@ -699,14 +720,14 @@ export class BotService {
               ).includes(tx.status) &&
               TransactionCurrency.star === tx.currency &&
               TransactionType.deposit === tx.type &&
-              !!tx.accountGift
+              !!tx.accountGift,
           )
           .reduce((total, tx) => total + tx.amount, 0),
       },
       withdraw: foo(
         TransactionType.withdraw,
         TransactionCurrency.ton,
-        transaction.account.transactions
+        transaction.account.transactions,
       ),
       referrals: {
         count: transaction.account.referral?.accounts.length || 0,
@@ -714,7 +735,7 @@ export class BotService {
           ton: foo(
             TransactionType.deposit,
             TransactionCurrency.ton,
-            referralTransactions
+            referralTransactions,
           ),
           star: referralTransactions
             ?.filter(
@@ -727,22 +748,22 @@ export class BotService {
                 ).includes(tx.status) &&
                 TransactionCurrency.star === tx.currency &&
                 TransactionType.deposit === tx.type &&
-                !!tx.accountGift
+                !!tx.accountGift,
             )
             .reduce((total, tx) => total + tx.amount, 0),
         },
         withdraw: foo(
           TransactionType.withdraw,
           TransactionCurrency.ton,
-          referralTransactions
+          referralTransactions,
         ),
       },
       gift: transaction.accountGift
         ? {
-          price: transaction.accountGift.nft.price,
-          title: transaction.accountGift.nft.title,
-          case: transaction.accountGift.case.title,
-        }
+            price: transaction.accountGift.nft.price,
+            title: transaction.accountGift.nft.title,
+            case: transaction.accountGift.case.title,
+          }
         : null,
       createdAt: transaction.account.createdAt.toLocaleDateString("en-US", {
         month: "long",
@@ -759,32 +780,33 @@ export class BotService {
         inline_keyboard: [
           isGiftWithdraw
             ? [
-              {
-                text: "Submit",
-                callback_data: `g_w_r_a_${payload.transactionId}`,
-              },
-              {
-                text: "Decline",
-                callback_data: `g_w_r_d_${payload.transactionId}`,
-              },
-            ]
+                {
+                  text: "Submit",
+                  callback_data: `g_w_r_a_${payload.transactionId}`,
+                },
+                {
+                  text: "Decline",
+                  callback_data: `g_w_r_d_${payload.transactionId}`,
+                },
+              ]
             : [
-              {
-                text: "Accept",
-                callback_data: `w_r_a_${payload.transactionId}`,
-              },
-              {
-                text: "Decline",
-                callback_data: `w_r_d_${payload.transactionId}`,
-              },
-            ],
+                {
+                  text: "Accept",
+                  callback_data: `w_r_a_${payload.transactionId}`,
+                },
+                {
+                  text: "Decline",
+                  callback_data: `w_r_d_${payload.transactionId}`,
+                },
+              ],
         ],
       },
     };
 
     const formattedJson = JSON.stringify(data, null, 2);
-    const message = `<b>${isGiftWithdraw ? "GIFT " : ""
-      }WITHDRAW</b> ${username}\n<pre><code class="language-json">${formattedJson}</code></pre>`;
+    const message = `<b>${
+      isGiftWithdraw ? "GIFT " : ""
+    }WITHDRAW</b> ${username}\n<pre><code class="language-json">${formattedJson}</code></pre>`;
 
     await this.bot.sendMessage(this.chatId, message, options);
   }
@@ -811,7 +833,7 @@ export class BotService {
       price: number;
       price_0_margin: number;
       price_50_margin: number;
-    }[]
+    }[],
   ) {
     const data = payload.map((item) => ({
       case: item.case,
@@ -841,7 +863,7 @@ export class BotService {
         JSON.stringify({ transactionId: payload.transactionId }),
         "",
         "XTR",
-        [{ amount: payload.amount, label: payload.title }]
+        [{ amount: payload.amount, label: payload.title }],
       );
 
       return invoiceLink;
@@ -900,12 +922,12 @@ export class BotService {
     const tonDepositTotal = numberToString(
       transaction.account.transactions
         .filter((tx) => tx.currency === TransactionCurrency.ton)
-        .reduce((total, tx) => total + tx.amount, 0)
+        .reduce((total, tx) => total + tx.amount, 0),
     );
     const starsDepositTotal = numberToString(
       transaction.account.transactions
         .filter((tx) => tx.currency === TransactionCurrency.star)
-        .reduce((total, tx) => total + tx.amount, 0)
+        .reduce((total, tx) => total + tx.amount, 0),
     );
 
     const username = `@${transaction.account.username}`;
@@ -935,7 +957,7 @@ export class BotService {
   }
 
   public async successWithdrawNotification<
-    T extends { username: string; amount: string; id: string }
+    T extends { username: string; amount: string; id: string },
   >(payload: T) {
     const messageOptions: SendMessageOptions = {
       parse_mode: "HTML",
@@ -947,7 +969,7 @@ export class BotService {
   }
 
   public async failedWithdrawNotification<
-    T extends { username: string; amount: string; id: string }
+    T extends { username: string; amount: string; id: string },
   >(payload: T) {
     const messageOptions: SendMessageOptions = {
       parse_mode: "HTML",
@@ -962,4 +984,3 @@ export class BotService {
     await this.bot.sendMessage(this.chatId, `⚠️ Error: ${message}`);
   }
 }
-

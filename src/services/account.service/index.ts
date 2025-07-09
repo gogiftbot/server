@@ -16,14 +16,14 @@ import { tonService } from "../ton.service";
 const foo = (
   type: TransactionType,
   currency: TransactionCurrency,
-  txs: transaction[] = []
+  txs: transaction[] = [],
 ) =>
   txs
     .filter(
       (tx) =>
         tx.status === TransactionStatus.completed &&
         tx.type === type &&
-        tx.currency === currency
+        tx.currency === currency,
     )
     .reduce((total, tx) => total + tx.amount, 0);
 
@@ -31,9 +31,9 @@ export class AccountService {
   private readonly referralService: ReferralService;
   private readonly botService: BotService;
 
-  constructor(private readonly prisma: Context['prisma']) {
+  constructor(private readonly prisma: Context["prisma"]) {
     this.referralService = new ReferralService();
-    this.botService = new BotService(this.prisma)
+    this.botService = new BotService(this.prisma);
   }
 
   public async getAccountStatistics(accountId: string) {
@@ -65,15 +65,15 @@ export class AccountService {
       username: account.username,
       balance: numberToString(account.balance),
       inventory: numberToString(
-        account.gifts.reduce((total, gift) => total + gift.price, 0)
+        account.gifts.reduce((total, gift) => total + gift.price, 0),
       ),
       deposit: {
         ton: numberToString(
           foo(
             TransactionType.deposit,
             TransactionCurrency.ton,
-            account.transactions
-          )
+            account.transactions,
+          ),
         ),
         star: account.transactions
           .filter(
@@ -86,7 +86,7 @@ export class AccountService {
               ).includes(tx.status) &&
               TransactionCurrency.star === tx.currency &&
               TransactionType.deposit === tx.type &&
-              !!tx.accountGift
+              !!tx.accountGift,
           )
           .reduce((total, tx) => total + tx.amount, 0),
       },
@@ -94,8 +94,8 @@ export class AccountService {
         foo(
           TransactionType.withdraw,
           TransactionCurrency.ton,
-          account.transactions
-        )
+          account.transactions,
+        ),
       ),
     };
   }
@@ -109,6 +109,26 @@ export class AccountService {
         account: {
           select: {
             id: true,
+            transactions: {
+              where: {
+                type: TransactionType.deposit,
+                OR: [
+                  {
+                    currency: TransactionCurrency.ton,
+                    status: TransactionStatus.completed,
+                  },
+                  {
+                    currency: TransactionCurrency.star,
+                    status: {
+                      in: [
+                        TransactionStatus.completed,
+                        TransactionStatus.pending,
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
             gifts: {
               select: {
                 id: true,
@@ -125,8 +145,8 @@ export class AccountService {
     const deposit = starsInUsd / tonToUsd + accountData.deposit.ton;
 
     if (
-      deposit < accountData.withdraw &&
-      transaction.account.gifts.length > 1
+      !transaction.account.transactions.length ||
+      (deposit < accountData.withdraw && transaction.account.gifts.length > 1)
     ) {
       await this.botService.onWithdraw(payload);
       return;
@@ -184,11 +204,11 @@ export class AccountService {
           },
           {
             retries: 3,
-          }
+          },
         );
 
         const accountStatistics = await this.getAccountStatistics(
-          transaction.account.id
+          transaction.account.id,
         );
         const data = Object.assign({}, accountStatistics, {
           id: transaction.id,
@@ -245,8 +265,8 @@ export class AccountService {
               .sendMessage(
                 transaction.account.telegramId,
                 failedGiftTransactionMessage(transaction.account.language)(
-                  transaction.accountGift?.nft.title
-                )
+                  transaction.accountGift?.nft.title,
+                ),
               )
               .catch(() => {});
           }
@@ -255,7 +275,7 @@ export class AccountService {
         });
 
         const accountStatistics = await this.getAccountStatistics(
-          transaction.accountId
+          transaction.accountId,
         );
         const data = Object.assign({}, accountStatistics, {
           error: (error as Error).message,
@@ -268,7 +288,7 @@ export class AccountService {
       }
     } catch (error) {
       await this.botService.internalErrorAlert(
-        `${(error as Error).message}:${payload.transactionId}`
+        `${(error as Error).message}:${payload.transactionId}`,
       );
     }
   }
@@ -304,7 +324,7 @@ export class AccountService {
       lastName?: string;
       telegramId?: string;
       avatarUrl?: string;
-    }
+    },
   ) {
     const account = await tx.account.findUnique({
       where: {
@@ -337,7 +357,7 @@ export class AccountService {
       language?: Language;
       telegramId?: string;
       avatarUrl?: string;
-    }
+    },
   ) {
     const account = await tx.account.create({
       data: {

@@ -1,4 +1,4 @@
-import { onTextCallback } from "./utils";
+import { onTextCallback } from "../utils";
 import {
   TransactionCurrency,
   TransactionStatus,
@@ -10,7 +10,7 @@ export const incrementBalance = onTextCallback(
     if (!payload.match || !payload.match[1] || !payload.match[2]) {
       bot.sendMessage(
         chatId,
-        "Некорректный формат команды. Используйте: /deposit {username} {amount}"
+        "Некорректный формат команды. Используйте: /deposit {username} {amount}",
       );
       return;
     }
@@ -41,7 +41,7 @@ export const incrementBalance = onTextCallback(
       if (!account) {
         await bot.sendMessage(
           chatId,
-          `Пользователь с таким username не найден (${username})`
+          `Пользователь с таким username не найден (${username})`,
         );
         return;
       }
@@ -71,5 +71,5 @@ export const incrementBalance = onTextCallback(
     });
 
     return data;
-  }
+  },
 );

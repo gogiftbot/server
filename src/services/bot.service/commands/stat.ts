@@ -1,4 +1,4 @@
-import { onTextCallback } from "./utils";
+import { onTextCallback } from "../utils";
 import { numberToString } from "@/utils/number";
 import {
   Prisma,
@@ -7,13 +7,16 @@ import {
   TransactionType,
 } from "@prisma/client";
 
-const getTransactions = async (prisma: Context['prisma'], options?: {
-  accountId?: string;
-  type?: TransactionType;
-  currency?: TransactionCurrency;
-  dateGte?: Date;
-  status?: TransactionStatus[];
-}) => {
+const getTransactions = async (
+  prisma: Context["prisma"],
+  options?: {
+    accountId?: string;
+    type?: TransactionType;
+    currency?: TransactionCurrency;
+    dateGte?: Date;
+    status?: TransactionStatus[];
+  },
+) => {
   const where: Prisma.transactionFindManyArgs["where"] = {
     status: {
       in: options?.status || ["completed"],
@@ -57,7 +60,7 @@ const getTransactions = async (prisma: Context['prisma'], options?: {
   return `${numberToString(total)} ${options?.currency}`;
 };
 
-export const stat = onTextCallback(async ({}, {prisma}) => {
+export const stat = onTextCallback(async ({}, { prisma }) => {
   const accounts = await prisma.account.count();
 
   const data = {

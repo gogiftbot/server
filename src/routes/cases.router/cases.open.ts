@@ -12,9 +12,14 @@ type ResponseData = {
   nft: { id: string; title: string; price: number; sku: string };
 };
 
-export async function CaseOpen(prisma: Context['prisma'], acc: Express.Request['account'], payload: { caseId: string; isDemo?: boolean }) {
-
+export async function CaseOpen(
+  prisma: Context["prisma"],
+  acc: Express.Request["account"],
+  payload: { caseId: string; isDemo?: boolean },
+) {
   const gift = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT * FROM accounts WHERE id = ${acc?.id} FOR UPDATE`;
+
     const account = await tx.account.findUniqueOrThrow({
       where: {
         id: acc?.id,
@@ -23,8 +28,6 @@ export async function CaseOpen(prisma: Context['prisma'], acc: Express.Request['
         gifts: true,
       },
     });
-
-    await tx.$executeRaw`SELECT * FROM accounts WHERE id = ${account.id} FOR UPDATE`;
 
     const giftCase = await tx.gift_case.findFirstOrThrow({
       where: {
@@ -146,5 +149,5 @@ export async function CaseOpen(prisma: Context['prisma'], acc: Express.Request['
     return responseData;
   });
 
-  return { gift }
+  return { gift };
 }

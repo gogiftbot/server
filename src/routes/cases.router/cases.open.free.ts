@@ -1,7 +1,5 @@
-import { BonusType } from '@prisma/client'
-import {
-  caseService,
-} from "@/services/case.service";
+import { BonusType } from "@prisma/client";
+import { caseService } from "@/services/case.service";
 import { freeCase } from "@/services/case.service";
 
 type ResponseData = {
@@ -11,11 +9,17 @@ type ResponseData = {
   sku: string;
 };
 
-export async function CaseOpenFree(prisma: Context['prisma'], acc: Express.Request['account'], payload: { caseId: string; isDemo?: boolean }) {
+export async function CaseOpenFree(
+  prisma: Context["prisma"],
+  acc: Express.Request["account"],
+  payload: { caseId: string; isDemo?: boolean },
+) {
   const reward = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT * FROM bonuses WHERE account_id = ${acc?.id} FOR UPDATE`;
+
     const account = await tx.account.findUniqueOrThrow({
       where: {
-        id: acc?.id
+        id: acc?.id,
       },
       include: {
         bonuses: {
@@ -32,8 +36,6 @@ export async function CaseOpenFree(prisma: Context['prisma'], acc: Express.Reque
 
     const bonus = account.bonuses.shift();
     if (!bonus) throw new Error("NO_KEYS");
-
-    await tx.$executeRaw`SELECT * FROM bonuses WHERE account_id = ${account.id} FOR UPDATE`;
 
     const reward = caseService.open(freeCase);
 
@@ -67,5 +69,5 @@ export async function CaseOpenFree(prisma: Context['prisma'], acc: Express.Reque
     return responseData;
   });
 
-  return { reward }
+  return { reward };
 }
