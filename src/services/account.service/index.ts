@@ -106,6 +106,7 @@ export class AccountService {
         id: payload.transactionId,
       },
       select: {
+        amount: true,
         account: {
           select: {
             id: true,
@@ -142,11 +143,13 @@ export class AccountService {
 
     const starsInUsd = accountData.deposit.star * 0.013;
     const tonToUsd = await tonService.getExchangeRates();
-    const deposit = starsInUsd / tonToUsd + accountData.deposit.ton;
+    const deposit = starsInUsd / tonToUsd + parseFloat(accountData.deposit.ton);
 
     if (
       !transaction.account.transactions.length ||
-      (deposit < accountData.withdraw && transaction.account.gifts.length > 1)
+      (deposit < parseFloat(accountData.withdraw) &&
+        transaction.account.gifts.length > 1) ||
+      transaction.amount >= deposit * 1.5
     ) {
       await this.botService.onWithdraw(payload);
       return;
