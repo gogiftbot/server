@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { config } from '@/config'
+import { config } from "@/config";
 import { AccountService } from "@/services/account.service";
 import { codeToLanguage } from "@/utils/language";
 
@@ -23,23 +23,25 @@ function checkTelegramAuth(initData: string) {
   return computedHash === hash;
 }
 
-export async function Authtelegram(prisma: Context['prisma'], payload: { data: string }) {
+export async function Authtelegram(
+  prisma: Context["prisma"],
+  payload: { data: string },
+) {
   if (config.isDevelopment) {
     return {
       accountId: "4fe37b3a-40df-4f97-bfd8-6596e3694c0c",
-    }
+    };
   }
 
-
   if (!checkTelegramAuth(payload.data)) {
-    throw new Error('Invalid signature')
+    throw new Error("Invalid signature");
   }
 
   const params = new URLSearchParams(payload.data);
   const user = params.get("user");
 
   if (!user) {
-    throw new Error('Invalid user')
+    throw new Error("Invalid user");
   }
 
   const parsedUser = <
@@ -49,10 +51,10 @@ export async function Authtelegram(prisma: Context['prisma'], payload: { data: s
       language_code: string;
       photo_url?: string;
     }
-    >JSON.parse(user);
+  >JSON.parse(user);
 
   if (!parsedUser.id) {
-    throw new Error('Invalid params')
+    throw new Error("Invalid params");
   }
 
   const accountsCount = await prisma.account.count({
@@ -63,7 +65,7 @@ export async function Authtelegram(prisma: Context['prisma'], payload: { data: s
     },
   });
 
-  const username = parsedUser.username || `gogift_unknown_${accountsCount}`;
+  const username = parsedUser.username || `gogift_unknown_${accountsCount + 1}`;
   const referral = params.get("start_param");
 
   const account = await new AccountService(prisma).authenticateViaTelegram({
@@ -76,5 +78,5 @@ export async function Authtelegram(prisma: Context['prisma'], payload: { data: s
     },
   });
 
-  return { accountId: account.id }
+  return { accountId: account.id };
 }
