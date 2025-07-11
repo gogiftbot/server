@@ -4,7 +4,6 @@ import cors from "cors";
 
 import { config } from "@/config";
 import { initRouters } from "@/routes";
-import { BotService } from "@/services/bot.service";
 
 import { loggerMiddleware } from "./logger.middleware";
 import { context } from "./context";
@@ -46,7 +45,6 @@ const PORT = config.PORT;
 
 server.listen({ port: PORT }, () => {
   console.log(`🚀 HTTP server listening at: http://localhost:${PORT}`);
-  // new BotService(context.prisma, true).listen()
 });
 
 onShutdown(async () => {

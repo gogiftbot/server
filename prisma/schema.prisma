@@ -48,6 +48,9 @@ model account {
   transactions transaction[]
   bonuses      bonus[]
 
+  raffles_participant raffle[] @relation("raffle_participants")
+  raffles_winner      raffle[] @relation("raffle_winner")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt() @map("updated_at")
 
@@ -223,6 +226,55 @@ model bonus {
   updatedAt DateTime @updatedAt()
 
   @@map("bonuses")
+}
+
+model raffle {
+  id String @id @default(uuid())
+
+  isCompleted Boolean  @default(false) @map("is_completed")
+  endDate     DateTime @map("end_date")
+
+  nft   raffleNft @relation(fields: [nftId], references: [id])
+  nftId String    @map("nft_id")
+
+  account   account? @relation("raffle_winner", fields: [accountId], references: [id])
+  accountId String?  @map("account_id")
+
+  accounts account[]    @relation("raffle_participants")
+  tasks    raffleTask[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+
+  @@map("raffles")
+}
+
+model raffleTask {
+  id String @id @default(uuid())
+
+  titleRU   String  @map("title_ru") @db.VarChar(255)
+  titleEN   String  @map("title_en") @db.VarChar(255)
+  linkTitle String? @map("link_title") @db.VarChar(255)
+  linkUrl   String? @map("link_url") @db.VarChar(255)
+
+  raffle   raffle @relation(fields: [raffleId], references: [id])
+  raffleId String @map("raffle_id")
+
+  createdAt DateTime @default(now())
+
+  @@map("raffle_tasks")
+}
+
+model raffleNft {
+  id String @id @default(uuid())
+
+  title String
+  sku   String
+  price Float
+
+  raffle raffle[]
+
+  @@map("raffle_nfts")
 }
 
 enum Language {

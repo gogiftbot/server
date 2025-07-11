@@ -983,4 +983,20 @@ export class BotService {
   public async internalErrorAlert(message: string) {
     await this.bot.sendMessage(this.chatId, `⚠️ Error: ${message}`);
   }
+
+  public async isUserSubscribed(payload: {
+    chatId: number;
+    telegramId: number;
+  }) {
+    try {
+      const response = await this.bot.getChatMember(
+        payload.chatId,
+        payload.telegramId,
+      );
+      if (["member", "administrator"].includes(response.status)) return true;
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
 }
