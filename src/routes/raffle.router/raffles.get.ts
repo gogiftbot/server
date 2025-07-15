@@ -16,6 +16,13 @@ export async function RafflesGet(
           createdAt: "asc",
         },
       },
+      account: {
+        select: {
+          username: true,
+          avatarUrl: true,
+          createdAt: true,
+        },
+      },
       accounts: {
         where: {
           id: acc?.id,
