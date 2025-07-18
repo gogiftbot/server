@@ -45,12 +45,12 @@ export async function RaffleParticipate(
     if (raffle.accounts.some((a) => a.id === account.id))
       throw new Error("RAFFLE_PARTICIPANT");
 
-    const isSubscribed = await botService.isUserSubscribed({
-      chatId: -1002568311629,
-      telegramId: parseInt(account.telegramId),
-    });
+    // const isSubscribed = await botService.isUserSubscribed({
+    //   chatId: -1002568311629,
+    //   telegramId: parseInt(account.telegramId),
+    // });
 
-    if (!isSubscribed) throw new Error("TASK_1");
+    // if (!isSubscribed) throw new Error("TASK_1");
 
     await tx.raffle.update({
       where: {

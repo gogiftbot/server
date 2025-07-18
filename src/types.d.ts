@@ -11,4 +11,12 @@ declare namespace Express {
   interface Response {}
 }
 
-declare type PrismaTransaction =  Parameters<Parameters<Context['prisma']['$transaction']>[0]>[0];
+declare type PrismaTransaction = Parameters<
+  Parameters<Context["prisma"]["$transaction"]>[0]
+>[0];
+declare module "lottie-node" {
+  export default any;
+}
+declare module "lottie-image" {
+  export default any;
+}
