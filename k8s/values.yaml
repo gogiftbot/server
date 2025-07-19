@@ -17,4 +17,4 @@ front:
   replicas: 1
   type: ClusterIP
   port: 3000
-  tag: release-2.1.4
+  tag: release-2.1.43
