@@ -363,7 +363,7 @@ export class BotService {
                   try {
                     await marketplaceService.sendGift({
                       id: gift.id,
-                      recipient: transaction.account.telegramId!,
+                      recipient: parseInt(transaction.account.telegramId!),
                     });
                   } catch (error) {
                     throw new Error(`cant_send:${transaction.id}`);

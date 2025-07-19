@@ -199,7 +199,7 @@ export class AccountService {
 
               await marketplaceService.sendGift({
                 id: gift.id,
-                recipient: transaction.account.telegramId,
+                recipient: parseInt(transaction.account.telegramId),
               });
 
               return transaction;

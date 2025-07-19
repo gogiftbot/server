@@ -8,4 +8,13 @@ import { tonService } from "@/services/ton.service";
 import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 
-wrapper(async ({ context }) => {});
+wrapper(async ({ context }) => {
+  const gift = await marketplaceService.getGiftToWithdraw({
+    title: "Bday Candle",
+  });
+
+  await marketplaceService.sendGift({
+    id: gift.id,
+    recipient: 653517638,
+  });
+});

@@ -141,7 +141,7 @@ const Authorization =
   "tma query_id=AAEtdsReAwAAAC12xF5bpjAU&user=%7B%22id%22%3A8032384557%2C%22first_name%22%3A%22GoGift%20Relayer%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22GoGift_Relayer%22%2C%22language_code%22%3A%22en%22%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FrIzkEK_z92hCbg0Q5cMj5oAIbkMctujmsZriOjWTsp5KQcaluaYdrR6DUm_AdMDZ.svg%22%7D&auth_date=1750579920&signature=iVKOYT0wyv-1XznLtNbhV7_XYo2rY0qXh9KmKEvOacW4mVgnYUV0V651Jv1BLTyPxcmIApwVIo5YBrQT44u2Bw&hash=4ef56b0e3b079a55d77d8c8b174a0fde94cebdcd1643ee5256b148ebbc6bc8f8";
 
 export class MarketplaceService {
-  async updatePrices(prisma: Context['prisma']) {
+  async updatePrices(prisma: Context["prisma"]) {
     const prices = await this.fetchPrices(prisma);
 
     const data = prices
@@ -160,7 +160,7 @@ export class MarketplaceService {
     }
   }
 
-  async fetchPrices(prisma: Context['prisma']) {
+  async fetchPrices(prisma: Context["prisma"]) {
     const nfts = await prisma.nft.findMany({
       where: {
         title: {
@@ -193,7 +193,7 @@ export class MarketplaceService {
 
   public async getGiftToWithdraw(
     payload: { title: string },
-    afterPurchase = false
+    afterPurchase = false,
   ): Promise<{ id: string; price: string }> {
     try {
       const gift = await marketplaceService.getGiftFromInventory({
@@ -235,7 +235,7 @@ export class MarketplaceService {
             "User-Agent": new UserAgent().data.userAgent,
           },
           signal: controller.signal,
-        }
+        },
       );
 
       const data = await res.json();
@@ -283,34 +283,34 @@ export class MarketplaceService {
     }
   }
 
-  async sendGift(payload: { id: string; recipient: string }): Promise<void> {
+  async sendGift(payload: { id: string; recipient: number }): Promise<void> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15 seconds
 
     try {
       const res = await fetch(
-        `https://portals-market.com/api/nfts/transfer-gifts`,
+        `https://portals-market.com/partners/nfts/withdraw`,
         {
           method: "POST",
           headers: {
             "Content-type": "application/json",
-            Authorization,
-            "User-Agent": new UserAgent().data.userAgent,
+            Authorization: "partners eda29b65-7f66-4c52-8712-d617399d2b60",
           },
           body: JSON.stringify({
-            nft_ids: [payload.id],
-            recipient: payload.recipient,
-            anonymous: true,
+            gift_ids: [payload.id],
+            recipient_id: payload.recipient,
+            unsafe_transfer: true,
           }),
           signal: controller.signal,
-        }
+        },
       );
 
       const data = await res.json();
 
+      console.log(data);
       if (!res.ok) {
         console.error("sendGift", data);
-        throw new Error(`BadRequest`);
+        throw new Error(res.statusText);
       }
     } finally {
       clearTimeout(timeoutId);
@@ -340,10 +340,12 @@ export class MarketplaceService {
             "User-Agent": new UserAgent().data.userAgent,
           },
           signal: controller.signal,
-        }
+        },
       );
 
-      const data = (await res.json()) as { nfts: { id: string; price: string }[] };
+      const data = (await res.json()) as {
+        nfts: { id: string; price: string }[];
+      };
 
       if (!res.ok) {
         console.error("getGiftFromInventory", data);
@@ -370,7 +372,7 @@ export class MarketplaceService {
       const res = await fetch(
         `https://portals-market.com/api/nfts/search?offset=0&limit=1&filter_by_collections=${title.replaceAll(
           " ",
-          "+"
+          "+",
         )}&sort_by=price+asc&status=listed`,
         {
           method: "GET",
@@ -380,11 +382,12 @@ export class MarketplaceService {
             "User-Agent": new UserAgent().data.userAgent,
           },
           signal: controller.signal,
-        }
+        },
       );
 
-      const data =
-        (await res.json()) as { results: { id: string; price: string }[] };
+      const data = (await res.json()) as {
+        results: { id: string; price: string }[];
+      };
 
       if (!res.ok) {
         console.error("getGiftFromAuction", data);
@@ -414,10 +417,12 @@ export class MarketplaceService {
             "User-Agent": new UserAgent().data.userAgent,
           },
           signal: controller.signal,
-        }
+        },
       );
 
-      const data = (await res.json()) as { floorPrices: Record<string, string> };
+      const data = (await res.json()) as {
+        floorPrices: Record<string, string>;
+      };
 
       if (!res.ok) {
         console.error("getPrices", data);
