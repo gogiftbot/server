@@ -6,9 +6,9 @@ import {
   validateRequest,
   routeWrapper,
 } from "../utils";
-import { CasesGet } from './cases.get'
-import { CaseOpen } from './cases.open'
-import { CaseOpenFree } from './cases.open.free'
+import { CasesGet } from "./cases.get";
+import { CaseOpen } from "./cases.open";
+import { CaseOpenFree } from "./cases.open.free";
 import {
   ResponseStatus,
   ServiceResponse,
@@ -18,9 +18,7 @@ import {
 const callback: Callback = (router, context) => {
   router.get(
     "/",
-    validateRequest(
-      z.object({}),
-    ),
+    validateRequest(z.object({})),
     routeWrapper(async (req) => {
       try {
         const cases = await CasesGet(context.prisma, req.account);
@@ -56,9 +54,9 @@ const callback: Callback = (router, context) => {
     ),
     routeWrapper(async (req) => {
       try {
-        if (!req.account) throw new Error('UNAUTHORIZED');
+        if (!req.account) throw new Error("UNAUTHORIZED");
 
-        const data = await CaseOpen(context.prisma, req.account, req.body);
+        const data = await CaseOpen(context, req.account, req.body);
 
         const serviceResponse = new ServiceResponse(
           ResponseStatus.Success,
@@ -81,12 +79,10 @@ const callback: Callback = (router, context) => {
 
   router.post(
     "/free/open",
-    validateRequest(
-      z.object({}),
-    ),
+    validateRequest(z.object({})),
     routeWrapper(async (req) => {
       try {
-        if (!req.account) throw new Error('UNAUTHORIZED');
+        if (!req.account) throw new Error("UNAUTHORIZED");
 
         const data = await CaseOpenFree(context.prisma, req.account, req.body);
 

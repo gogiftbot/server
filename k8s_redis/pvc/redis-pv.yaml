@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-volume
+  labels:
+    app: redis
+spec:
+  capacity:
+    storage: 20Gi
+  cinder:
+   volumeID: "82837337-242d-4d40-8c44-32f70ff771c2"
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain

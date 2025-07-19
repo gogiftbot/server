@@ -6,8 +6,8 @@ import {
   validateRequest,
   routeWrapper,
 } from "../utils";
-import { GiftWithdraw } from './gift.withdraw'
-import { GiftSell } from './gift.sell'
+import { GiftWithdraw } from "./gift.withdraw";
+import { GiftSell } from "./gift.sell";
 import {
   ResponseStatus,
   ServiceResponse,
@@ -15,6 +15,53 @@ import {
 } from "@/services/response.service";
 
 const callback: Callback = (router, context) => {
+  router.get(
+    "/",
+    validateRequest(z.object({})),
+    routeWrapper(async (req) => {
+      try {
+        const gifts = await context.prisma.account_gift.findMany({
+          where: {
+            nft: {
+              sku: {
+                not: "ton",
+              },
+            },
+          },
+          take: 5,
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            id: true,
+            price: true,
+            nft: {
+              select: {
+                sku: true,
+              },
+            },
+          },
+        });
+
+        const serviceResponse = new ServiceResponse(
+          ResponseStatus.Success,
+          "Success",
+          gifts,
+          StatusCode.Ok,
+        );
+
+        return serviceResponse;
+      } catch (error: any) {
+        return new ServiceResponse(
+          ResponseStatus.Failed,
+          "Bad request",
+          null,
+          StatusCode.BadRequest,
+        );
+      }
+    }),
+  );
+
   router.post(
     "/sell",
     validateRequest(
@@ -26,7 +73,7 @@ const callback: Callback = (router, context) => {
     ),
     routeWrapper(async (req) => {
       try {
-        if (!req.account) throw new Error('UNAUTHORIZED');
+        if (!req.account) throw new Error("UNAUTHORIZED");
 
         const data = await GiftSell(context.prisma, req.account, req.body);
 
@@ -60,7 +107,7 @@ const callback: Callback = (router, context) => {
     ),
     routeWrapper(async (req) => {
       try {
-        if (!req.account) throw new Error('UNAUTHORIZED');
+        if (!req.account) throw new Error("UNAUTHORIZED");
 
         const data = await GiftWithdraw(context.prisma, req.account, req.body);
 

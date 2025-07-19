@@ -7,12 +7,14 @@
     "build": "tsup",
     "tsc:build": "tsc -p .",
     "start:www": "node dist/bin/www.js",
+    "start:ws": "node dist/bin/ws.js",
     "start:bot": "node dist/bin/bot.js",
     "dev": "tsx src/bin/www.ts",
+    "dev:ws": "tsx src/bin/ws.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "6.11.1",
+    "@prisma/client": "6.12.0",
     "@ton-api/client": "^0.4.0",
     "@ton/core": "^0.60.1",
     "@ton/crypto": "^3.3.0",
@@ -24,10 +26,10 @@
     "express": "^4.19.2",
     "express-winston": "^4.2.0",
     "helmet": "^7.1.0",
-    "lottie-image": "^1.2.0",
-    "lottie-node": "^2.0.0",
+    "ioredis": "^5.6.1",
     "node-cron": "^4.2.0",
     "node-telegram-bot-api": "^0.66.0",
+    "socket.io": "^4.8.1",
     "user-agents": "^1.1.592",
     "winston": "^3.17.0",
     "zod": "^3.23.8"
@@ -40,7 +42,7 @@
     "@types/node-telegram-bot-api": "^0.64.7",
     "@types/user-agents": "^1.0.4",
     "prettier": "^3.3.3",
-    "prisma": "^6.11.1",
+    "prisma": "^6.12.0",
     "tsup": "^8.2.3",
     "tsx": "^4.16.5",
     "typescript": "^5.5.4"

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: "{{ .Release.Name }}-cache-redis"
+  name: "{{ .Release.Name }}-cache-redis"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ .Release.Name }}-cache-redis"
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: "{{ .Release.Name }}-cache-redis"
+    spec:
+      containers:
+        - args:
+            - redis-server
+            - --requirepass
+            - "1"
+          env:
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "yes"
+          image: "bitnami/redis:6.0.13"
+          name: "{{ .Release.Name }}-cache-container"
+          ports:
+            - containerPort: 6379
+          resources:
+            requests:
+              cpu: 100m
+              memory: 300Mi
+            limits:
+              cpu: 600m
+              memory: 1000Mi
+          volumeMounts:
+           - mountPath: /bitnami/redis/data
+             name: redis-volume-claim
+      restartPolicy: Always
+      volumes:
+       - name: redis-volume-claim
+         persistentVolumeClaim:
+           claimName: redis-volume-claim
+status: {}

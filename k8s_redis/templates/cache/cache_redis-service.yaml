@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: "{{ .Release.Name }}-cache-redis"
+  name: "{{ .Release.Name }}-cache-redis"
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: "{{ .Release.Name }}-cache-redis"
+

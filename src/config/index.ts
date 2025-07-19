@@ -13,8 +13,16 @@ const envSchema = z.object({
   PORT: z.coerce
     .number()
     .positive()
-    .max(65536, `options.port should be >= 0 and < 65536`),
+    .max(65536, `options.PORT should be >= 0 and < 65536`),
   HOSTNAME: z.string().url(),
+
+  REDIS_DOMAIN: z.string(),
+  REDIS_PORT: z.coerce
+    .number()
+    .positive()
+    .max(65536, `options.REDIS_PORT should be >= 0 and < 65536`),
+  REDIS_USERNAME: z.string().optional(),
+  REDIS_PASSWORD: z.string().optional(),
 
   BOT_API_KEY: z.string(),
 
@@ -32,6 +40,12 @@ const config = {
   host: `${env.HOSTNAME}/api`,
   PORT: env.PORT,
   isDevelopment: env.NODE_ENV !== NODE_ENV.production,
+  redis: {
+    domain: env.REDIS_DOMAIN,
+    port: env.REDIS_PORT,
+    username: env.REDIS_USERNAME,
+    password: env.REDIS_PASSWORD,
+  },
   bot: {
     apiKey: env.BOT_API_KEY,
     name: "GoGift_official_bot",
@@ -45,7 +59,7 @@ const config = {
     },
     crypto: {
       apiKey: env.CRYPTO_COMPARE_API_KEY,
-    }
+    },
   },
 } as const;
 

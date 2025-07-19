@@ -13,11 +13,11 @@ type ResponseData = {
 };
 
 export async function CaseOpen(
-  prisma: Context["prisma"],
+  context: Context,
   acc: Express.Request["account"],
   payload: { caseId: string; isDemo?: boolean },
 ) {
-  const gift = await prisma.$transaction(async (tx) => {
+  const gift = await context.prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT * FROM accounts WHERE id = ${acc?.id} FOR UPDATE`;
 
     const account = await tx.account.findUniqueOrThrow({
@@ -103,6 +103,12 @@ export async function CaseOpen(
         },
       };
 
+      await context.pubsub.live.publish({
+        id: accountGift.id,
+        nft: { sku: accountGift.nft.sku },
+        price: accountGift.price,
+      });
+
       return responseData;
     }
 
@@ -146,6 +152,14 @@ export async function CaseOpen(
         title: gift.title,
       },
     };
+
+    if (!isTon) {
+      await context.pubsub.live.publish({
+        id: accountGift.id,
+        nft: { sku: accountGift.nft.sku },
+        price: accountGift.price,
+      });
+    }
 
     return responseData;
   });
