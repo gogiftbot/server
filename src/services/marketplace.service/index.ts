@@ -299,7 +299,7 @@ export class MarketplaceService {
           body: JSON.stringify({
             gift_ids: [payload.id],
             recipient_id: payload.recipient,
-            unsafe_transfer: true,
+            unsafe_transfer: false,
           }),
           signal: controller.signal,
         },
