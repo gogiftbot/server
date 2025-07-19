@@ -898,7 +898,21 @@ export class BotService {
             transactions: {
               where: {
                 type: "deposit",
-                status: "completed",
+                OR: [
+                  {
+                    currency: TransactionCurrency.ton,
+                    status: "completed",
+                  },
+                  {
+                    currency: TransactionCurrency.star,
+                    status: {
+                      in: [
+                        TransactionStatus.completed,
+                        TransactionStatus.completed,
+                      ],
+                    },
+                  },
+                ],
               },
               select: {
                 amount: true,
