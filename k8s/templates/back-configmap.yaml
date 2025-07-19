@@ -21,3 +21,8 @@ data:
 
   DATABASE_URL: "postgres://user:AF63+64XLB5H4J86x@212.233.90.225/production"
   SHADOW_DATABASE_URL: "postgres://user:AF63+64XLB5H4J86x@212.233.90.225/prisma_shadow"
+
+  REDIS_DOMAIN: redis-cache-redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: "1"
+  REDIS_USERNAME: "default"
