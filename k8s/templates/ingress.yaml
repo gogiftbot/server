@@ -8,11 +8,13 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`{{ .Values.hostname }}`) && PathPrefix(`/socket.io/`)
+    - match: Host(`{{ .Values.hostname }}`) && (PathPrefix(`/socket.io`) || Path(`/socket.io`))
       kind: Rule
       services:
         - name: "dev-{{ .Release.Name }}-back-ws"
           port: {{ .Values.back.port }}
+          responseForwarding:
+            flushInterval: "1ms"
     - match: Host(`{{ .Values.hostname }}`) && PathPrefix(`/go`)
       kind: Rule
       services:

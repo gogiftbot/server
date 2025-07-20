@@ -1,7 +1,7 @@
 import http from "http";
 import express from "express";
 import cors from "cors";
-import { Server } from "socket.io";
+import IO, { Server } from "socket.io";
 
 import { config } from "@/config";
 
@@ -14,14 +14,17 @@ const corsOptions: cors.CorsOptions = {
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
 };
+const PORT = config.PORT + 1;
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: corsOptions,
-});
-
-io.on("connection", (_socket) => {});
+// const io = new Server(server, {
+//   cors: {
+//     origin: "*",
+//   },
+// });
+const io = require("socket.io")();
+io.listen(PORT);
 
 context.pubsub.live.subscribe(async (data) => {
   io.emit("LIVE", data);
@@ -30,14 +33,10 @@ context.pubsub.live.subscribe(async (data) => {
 app.use(express.json({ limit: 81920 }));
 app.use(loggerMiddleware(context.logger));
 
-const PORT = config.PORT;
-
-server.listen({ port: PORT }, () => {
-  console.log(`🚀 WS server listening at: ws://localhost:${PORT}`);
-});
+// server.listen({ port: PORT }, () => {
+//   console.log(`🚀 WS server listening at: ws://localhost:${PORT}`);
+// });
 
 onShutdown(async () => {
   await context.prisma.$disconnect();
 });
-
-export { app };

@@ -317,6 +317,31 @@ export class MarketplaceService {
     }
   }
 
+  async isPortalUser(telegramId: string | number) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15 seconds
+
+    try {
+      const res = await fetch(
+        `https://portals-market.com/partners/users/${telegramId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-type": "application/json",
+            Authorization: "partners eda29b65-7f66-4c52-8712-d617399d2b60",
+          },
+        },
+      );
+
+      const data = (await res.json()) as { exists?: boolean };
+      if (data.exists) return true;
+    } catch (_error) {
+      return false;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
   async getGiftFromInventory(payload: {
     title: string;
   }): Promise<{ id: string; price: string } | undefined> {

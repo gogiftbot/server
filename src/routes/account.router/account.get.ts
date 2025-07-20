@@ -1,6 +1,10 @@
-import { BonusType } from '@prisma/client'
+import { marketplaceService } from "@/services/marketplace.service";
+import { BonusType } from "@prisma/client";
 
-export async function AccountGet(prisma: Context['prisma'], acc: Express.Request['account']) {
+export async function AccountGet(
+  prisma: Context["prisma"],
+  acc: Express.Request["account"],
+) {
   const account = await prisma.account.findUniqueOrThrow({
     where: {
       id: acc?.id,
@@ -52,5 +56,9 @@ export async function AccountGet(prisma: Context['prisma'], acc: Express.Request
     },
   });
 
-  return account
+  const isPortalUser = await marketplaceService.isPortalUser(
+    account.telegramId!,
+  );
+
+  return Object.assign({}, account, { isPortalUser });
 }

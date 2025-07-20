@@ -50,5 +50,3 @@ server.listen({ port: PORT }, () => {
 onShutdown(async () => {
   await context.prisma.$disconnect();
 });
-
-export { app };
