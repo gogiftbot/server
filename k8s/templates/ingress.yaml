@@ -8,13 +8,11 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`{{ .Values.hostname }}`) && PathPrefix(`/`) && Headers(`Upgrade`, `websocket`)
+    - match: Host(`{{ .Values.hostname }}`) && PathPrefix(`/socket.io/`)
       kind: Rule
       services:
         - name: "dev-{{ .Release.Name }}-back-ws"
           port: {{ .Values.back.port }}
-      timeouts:
-        idleTimeout: 3600s
     - match: Host(`{{ .Values.hostname }}`) && PathPrefix(`/go`)
       kind: Rule
       services:
