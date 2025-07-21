@@ -112,8 +112,7 @@ export async function CaseOpen(
       return responseData;
     }
 
-    const exp = account.username === "not_e" ? 1 : 1.8;
-    const gift = caseService.open(giftCase.gifts, exp);
+    const gift = caseService.open(giftCase.gifts);
     const isTon = gift.title === CaseService.TON_GIFT.toUpperCase();
 
     const accountGift = await tx.account_gift.create({

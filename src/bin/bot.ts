@@ -1,9 +1,8 @@
 import cron from "node-cron";
 import { BotService } from "@/services/bot.service";
 import { marketplaceService } from "@/services/marketplace.service";
-import { CaseService } from "@/services/case.service";
+import { caseService, CaseService } from "@/services/case.service";
 import { tonService } from "@/services/ton.service";
-import { getRandomArrayElement } from "@/utils/number";
 import { context } from "./context";
 import { intervalWrapper } from "@/utils/wrapper";
 
@@ -15,6 +14,7 @@ intervalWrapper(
           id: true,
           sku: true,
           price: true,
+          title: true,
         },
         where: {
           sku: {
@@ -23,7 +23,7 @@ intervalWrapper(
         },
       });
 
-      const nft = getRandomArrayElement(nfts);
+      const nft = caseService.open(nfts, 1);
 
       await context.pubsub.live.publish({
         id: nft.id,
