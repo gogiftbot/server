@@ -7,10 +7,8 @@
     "build": "tsup",
     "tsc:build": "tsc -p .",
     "start:www": "node dist/bin/www.js",
-    "start:ws": "node dist/bin/ws.js",
     "start:bot": "node dist/bin/bot.js",
     "dev": "tsx src/bin/www.ts",
-    "dev:ws": "tsx src/bin/ws.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
