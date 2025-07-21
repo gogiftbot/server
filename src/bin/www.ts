@@ -1,6 +1,7 @@
 import http from "http";
 import express from "express";
 import cors from "cors";
+import { Server } from "socket.io";
 
 import { config } from "@/config";
 import { initRouters } from "@/routes";
@@ -18,6 +19,16 @@ const corsOptions: cors.CorsOptions = {
 
 const app = express();
 const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
+context.pubsub.live.subscribe(async (data) => {
+  io.emit("LIVE", data);
+});
 
 app.use(express.json({ limit: 81920 }));
 app.use(loggerMiddleware(context.logger));
