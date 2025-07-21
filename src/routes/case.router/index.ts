@@ -67,6 +67,7 @@ const callback: Callback = (router, context) => {
 
         return serviceResponse;
       } catch (error: any) {
+        console.error(error);
         return new ServiceResponse(
           ResponseStatus.Failed,
           "Bad request",
