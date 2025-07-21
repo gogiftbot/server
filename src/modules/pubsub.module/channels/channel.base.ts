@@ -1,13 +1,14 @@
 export class PubsubChannel<T> {
   constructor(
-    private readonly cache: Context["cache"],
+    private readonly publisher: Context["cache"],
+    private readonly subscriber: Context["cache"],
     public readonly key: string,
   ) {}
 
   public async publish(payload: T) {
-    await this.cache.publish(this.key, payload);
+    await this.publisher.publish(this.key, payload);
   }
   public async subscribe(callback: (payload: T) => any) {
-    await this.cache.subscribe(this.key, callback);
+    await this.subscriber.subscribe(this.key, callback);
   }
 }

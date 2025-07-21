@@ -9,7 +9,7 @@ back:
   replicas: 2
   type: ClusterIP
   port: 4000
-  tag: release-2.1.55
+  tag: release-2.1.56
 
 front:
   image: web

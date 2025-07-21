@@ -9,7 +9,7 @@ const initContext = (): Context => {
 
   const logger = initLogger();
   const cache = initCache();
-  const pubsub = initPubsub(cache);
+  const pubsub = initPubsub();
 
   const context: Context = Object.freeze({
     prisma,

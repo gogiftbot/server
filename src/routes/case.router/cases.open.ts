@@ -17,105 +17,68 @@ export async function CaseOpen(
   acc: Express.Request["account"],
   payload: { caseId: string; isDemo?: boolean },
 ) {
-  const gift = await context.prisma.$transaction(
-    async (tx) => {
-      await tx.$executeRaw`SELECT * FROM accounts WHERE id = ${acc?.id} FOR UPDATE`;
+  const gift = await context.prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT * FROM accounts WHERE id = ${acc?.id} FOR UPDATE`;
 
-      const account = await tx.account.findUniqueOrThrow({
-        where: {
-          id: acc?.id,
-        },
-        include: {
-          gifts: true,
-        },
-      });
+    const account = await tx.account.findUniqueOrThrow({
+      where: {
+        id: acc?.id,
+      },
+      include: {
+        gifts: true,
+      },
+    });
 
-      const giftCase = await tx.gift_case.findFirstOrThrow({
-        where: {
-          id: payload.caseId,
-          isArchived: false,
-        },
-        select: {
-          id: true,
-          price: true,
-          gifts: {
-            select: {
-              id: true,
-              title: true,
-              sku: true,
-              price: true,
-            },
-            orderBy: {
-              price: "desc",
-            },
+    const giftCase = await tx.gift_case.findFirstOrThrow({
+      where: {
+        id: payload.caseId,
+        isArchived: false,
+      },
+      select: {
+        id: true,
+        price: true,
+        gifts: {
+          select: {
+            id: true,
+            title: true,
+            sku: true,
+            price: true,
+          },
+          orderBy: {
+            price: "desc",
           },
         },
-      });
+      },
+    });
 
-      if (payload.isDemo || influenceIds.includes(account.id)) {
-        const index = getRandomNumber(0, giftCase.gifts.length - 1);
-        const gift = giftCase.gifts[index];
-        const isTon = gift.title === CaseService.TON_GIFT.toUpperCase();
-
-        const responseData: ResponseData = { id: "demo", isTon, nft: gift };
-        return responseData;
-      }
-
-      if (account.balance - giftCase.price < 0)
-        throw new Error("INFLUENT_BALANCE");
-
-      await tx.account.update({
-        where: {
-          id: account.id,
-          balance: { gte: giftCase.price },
-        },
-        data: {
-          balance: account.balance - giftCase.price,
-        },
-      });
-
-      if (
-        !account.gifts.length &&
-        allowedFirstCaseIds.includes(giftCase.id) &&
-        getProbability(50)
-      ) {
-        const gift = findMinAboveN(giftCase.gifts, giftCase.price);
-
-        const accountGift = await tx.account_gift.create({
-          data: {
-            accountId: account.id,
-            nftId: gift.id,
-            caseId: giftCase.id,
-            price: gift.price,
-          },
-          include: {
-            nft: true,
-          },
-        });
-
-        const responseData: ResponseData = {
-          id: accountGift.id,
-          isTon: false,
-          nft: {
-            id: gift.id,
-            price: gift.price,
-            sku: gift.sku,
-            title: gift.title,
-          },
-        };
-
-        // await context.pubsub.live.publish({
-        //   id: accountGift.id,
-        //   nft: { sku: accountGift.nft.sku },
-        //   price: accountGift.price,
-        // });
-
-        return responseData;
-      }
-
-      const exp = account.username === "not_e" ? 1 : 1.8;
-      const gift = caseService.open(giftCase.gifts, exp);
+    if (payload.isDemo || influenceIds.includes(account.id)) {
+      const index = getRandomNumber(0, giftCase.gifts.length - 1);
+      const gift = giftCase.gifts[index];
       const isTon = gift.title === CaseService.TON_GIFT.toUpperCase();
+
+      const responseData: ResponseData = { id: "demo", isTon, nft: gift };
+      return responseData;
+    }
+
+    if (account.balance - giftCase.price < 0)
+      throw new Error("INFLUENT_BALANCE");
+
+    await tx.account.update({
+      where: {
+        id: account.id,
+        balance: { gte: giftCase.price },
+      },
+      data: {
+        balance: account.balance - giftCase.price,
+      },
+    });
+
+    if (
+      !account.gifts.length &&
+      allowedFirstCaseIds.includes(giftCase.id) &&
+      getProbability(50)
+    ) {
+      const gift = findMinAboveN(giftCase.gifts, giftCase.price);
 
       const accountGift = await tx.account_gift.create({
         data: {
@@ -123,29 +86,15 @@ export async function CaseOpen(
           nftId: gift.id,
           caseId: giftCase.id,
           price: gift.price,
-          isSold: isTon,
         },
         include: {
           nft: true,
         },
       });
 
-      if (isTon) {
-        await tx.account.update({
-          where: {
-            id: account.id,
-          },
-          data: {
-            balance: {
-              increment: gift.price,
-            },
-          },
-        });
-      }
-
       const responseData: ResponseData = {
         id: accountGift.id,
-        isTon,
+        isTon: false,
         nft: {
           id: gift.id,
           price: gift.price,
@@ -154,20 +103,66 @@ export async function CaseOpen(
         },
       };
 
-      if (!isTon) {
-        // await context.pubsub.live.publish({
-        //   id: accountGift.id,
-        //   nft: { sku: accountGift.nft.sku },
-        //   price: accountGift.price,
-        // });
-      }
+      await context.pubsub.live.publish({
+        id: accountGift.id,
+        nft: { sku: accountGift.nft.sku },
+        price: accountGift.price,
+      });
 
       return responseData;
-    },
-    {
-      timeout: 10_000,
-    },
-  );
+    }
+
+    const exp = account.username === "not_e" ? 1 : 1.8;
+    const gift = caseService.open(giftCase.gifts, exp);
+    const isTon = gift.title === CaseService.TON_GIFT.toUpperCase();
+
+    const accountGift = await tx.account_gift.create({
+      data: {
+        accountId: account.id,
+        nftId: gift.id,
+        caseId: giftCase.id,
+        price: gift.price,
+        isSold: isTon,
+      },
+      include: {
+        nft: true,
+      },
+    });
+
+    if (isTon) {
+      await tx.account.update({
+        where: {
+          id: account.id,
+        },
+        data: {
+          balance: {
+            increment: gift.price,
+          },
+        },
+      });
+    }
+
+    const responseData: ResponseData = {
+      id: accountGift.id,
+      isTon,
+      nft: {
+        id: gift.id,
+        price: gift.price,
+        sku: gift.sku,
+        title: gift.title,
+      },
+    };
+
+    if (!isTon) {
+      await context.pubsub.live.publish({
+        id: accountGift.id,
+        nft: { sku: accountGift.nft.sku },
+        price: accountGift.price,
+      });
+    }
+
+    return responseData;
+  });
 
   return { gift };
 }

@@ -6,7 +6,7 @@ export const numberToString = (value: number, digits = 2) =>
 
 export const findMinAboveN = <T extends { price: number }>(
   arr: T[],
-  N: number
+  N: number,
 ): T => {
   const sorted = [...arr].sort((a, b) => b.price - a.price);
   const last = sorted.findLast((obj) => obj.price > N);
@@ -23,3 +23,6 @@ export const getProbability = (percent: number): boolean => {
   if (percent >= 100) return true;
   return Math.random() * 100 < percent;
 };
+
+export const getRandomArrayElement = <T>(items: T[]) =>
+  items[Math.floor(Math.random() * items.length)];

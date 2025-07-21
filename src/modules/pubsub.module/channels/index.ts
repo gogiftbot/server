@@ -2,13 +2,16 @@ import { PubsubChannel } from "./channel.base";
 
 type LivePubsubPayload = { id: string; nft: { sku: string }; price: number };
 class LivePubsubChannel extends PubsubChannel<LivePubsubPayload> {
-  constructor(cache: Context["cache"]) {
-    super(cache, "live");
+  constructor(publisher: Context["cache"], subscriber: Context["cache"]) {
+    super(publisher, subscriber, "live");
   }
 }
 
-export const initChannels = (cache: Context["cache"]) => {
+export const initChannels = (
+  publisher: Context["cache"],
+  subscriber: Context["cache"],
+) => {
   return {
-    live: new LivePubsubChannel(cache),
+    live: new LivePubsubChannel(publisher, subscriber),
   } as const;
 };

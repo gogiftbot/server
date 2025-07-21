@@ -7,11 +7,17 @@ import { marketplaceService } from "@/services/marketplace.service";
 import { CaseService } from "@/services/case.service";
 import { tonService } from "@/services/ton.service";
 import { PrismaClient } from "@prisma/client";
+import { getRandomArrayElement, getRandomNumber } from "@/utils/number";
 
-wrapper(async ({ context }) => {
-  await context.pubsub.live.publish({
-    id: "1",
-    nft: { sku: "scared-cat" },
-    price: 3.33,
-  });
-});
+const intervalWrapper = async (
+  callback: () => Promise<void>,
+  options: { min: number; max: number },
+) =>
+  callback().finally(() =>
+    setTimeout(
+      () => intervalWrapper(callback, options),
+      getRandomNumber(options.min, options.max) * 1000,
+    ),
+  );
+
+wrapper(async ({ context }) => {}, false);
