@@ -1,3 +1,4 @@
+import { config } from "@/config";
 import UserAgent from "user-agents";
 
 const mapper: Record<string, string> = {
@@ -285,7 +286,7 @@ export class MarketplaceService {
 
   async sendGift(payload: { id: string; recipient: number }): Promise<void> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
     try {
       const res = await fetch(
@@ -294,7 +295,7 @@ export class MarketplaceService {
           method: "POST",
           headers: {
             "Content-type": "application/json",
-            Authorization: "partners eda29b65-7f66-4c52-8712-d617399d2b60",
+            Authorization: `partners ${config.integration.portals}`,
           },
           body: JSON.stringify({
             gift_ids: [payload.id],
@@ -307,7 +308,6 @@ export class MarketplaceService {
 
       const data = await res.json();
 
-      console.log(data);
       if (!res.ok) {
         console.error("sendGift", data);
         throw new Error(res.statusText);
@@ -328,7 +328,7 @@ export class MarketplaceService {
           method: "GET",
           headers: {
             "Content-type": "application/json",
-            Authorization: "partners eda29b65-7f66-4c52-8712-d617399d2b60",
+            Authorization: `partners ${config.integration.portals}`,
           },
         },
       );

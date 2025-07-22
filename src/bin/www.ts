@@ -8,6 +8,7 @@ import { config } from "@/config";
 import { initRouters } from "@/routes";
 
 import { loggerMiddleware } from "./logger.middleware";
+import { limiterMiddleware } from "./limiter.middleware";
 import { context } from "./context";
 import { onShutdown } from "./utils/shutdown";
 
@@ -21,12 +22,10 @@ const corsOptions: cors.CorsOptions = {
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(server, { cors: corsOptions });
-context.pubsub.live.subscribe((data) => io.emit("LIVE", data));
-
+app.use(cors(corsOptions));
 app.use(express.json({ limit: 81920 }));
 app.use(loggerMiddleware(context.logger));
-app.use(cors(corsOptions));
+app.use(limiterMiddleware(context.logger));
 
 app.use(
   helmet({
@@ -59,6 +58,9 @@ app.use(async (req: express.Request, _res, next) => {
 });
 
 app.use(initRouters(context));
+
+const io = new Server(server, { cors: corsOptions });
+context.pubsub.live.subscribe((data) => io.emit("LIVE", data));
 
 const PORT = config.PORT;
 

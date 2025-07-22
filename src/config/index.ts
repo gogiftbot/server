@@ -27,10 +27,12 @@ const envSchema = z.object({
   BOT_API_KEY: z.string(),
 
   TON_ADDRESS: z.string(),
-  TON_MNEMONIC: z.string(),
+  TON_MNEMONIC: z.string().optional(),
   TON_API_KEY: z.string(),
   TON_CENTER_API_KEY: z.string(),
   CRYPTO_COMPARE_API_KEY: z.string(),
+
+  PORTAL_API_KEY: z.string(),
 });
 
 export const env = envSchema.parse(process.env);
@@ -40,7 +42,13 @@ const config = {
   host: `${env.HOSTNAME}/api`,
   PORT: env.PORT,
   isDevelopment: env.NODE_ENV !== NODE_ENV.production,
+  integration: {
+    portals: {
+      apiKey: env.PORTAL_API_KEY,
+    },
+  },
   redis: {
+    url: `redis://${env.REDIS_USERNAME}:${env.REDIS_PASSWORD}@${env.REDIS_DOMAIN}:${env.PORT}`,
     domain: env.REDIS_DOMAIN,
     port: env.REDIS_PORT,
     username: env.REDIS_USERNAME,

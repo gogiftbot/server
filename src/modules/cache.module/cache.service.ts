@@ -4,7 +4,7 @@ import { RedisConfig } from "./cache.config";
 const sleep = async (timeout = 10) =>
   new Promise<void>((resolve) => setTimeout(resolve, timeout));
 
-export const initCacheClient = (config: RedisConfig): Redis | Cluster => {
+export const initRedisClient = (config: RedisConfig): Redis | Cluster => {
   const redisOptions: RedisOptions = {
     username: config.username,
     password: config.password,
@@ -33,7 +33,7 @@ export class CacheService {
     logger?: Context["logger"],
   ) {
     this.logger = logger;
-    this.client = initCacheClient(this.config);
+    this.client = initRedisClient(this.config);
   }
 
   public get redis(): Redis | Cluster {
