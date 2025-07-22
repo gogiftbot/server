@@ -1,25 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
   name: "dev-{{ .Release.Name }}-back"
   labels:
     app: "dev-{{ .Release.Name }}-back"
   annotations:
     timestamp: {{ now | quote }}
-
 spec:
   replicas: {{ .Values.back.replicas }}
-
   selector:
     matchLabels:
       app: "dev-{{ .Release.Name }}-back"
-
   template:
     metadata:
       labels:
         app: "dev-{{ .Release.Name }}-back"
-
     spec:
       containers:
         - name: "dev-{{ .Release.Name }}-back"
@@ -29,13 +24,13 @@ spec:
           ports:
             - containerPort: {{ .Values.back.port }}
               protocol: TCP
-          resources:
-            requests:
-              cpu: "{{ .Values.back.resources.requests.cpu }}"
-              memory: "{{ .Values.back.resources.requests.memory }}"
-            limits:
-              cpu: "{{ .Values.back.resources.limits.cpu }}"
-              memory: "{{ .Values.back.resources.limits.memory }}"
+          # resources:
+          #   requests:
+          #     cpu: "{{ .Values.back.resources.requests.cpu }}"
+          #     memory: "{{ .Values.back.resources.requests.memory }}"
+          #   limits:
+          #     cpu: "{{ .Values.back.resources.limits.cpu }}"
+          #     memory: "{{ .Values.back.resources.limits.memory }}"
           envFrom:
             - configMapRef:
                 name: "dev-{{ .Release.Name }}-back-config"
@@ -44,7 +39,6 @@ spec:
               mountPath: "/app/"
               readOnly: true
               subPath: ".env"
-
       volumes:
         - name: "dev-{{ .Release.Name }}-back-config-file"
           configMap:

@@ -1,25 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
   name: "dev-{{ .Release.Name }}-front"
   labels:
     app: "dev-{{ .Release.Name }}-front"
   annotations:
     timestamp: {{ now | quote }}
-
 spec:
   replicas: {{ .Values.front.replicas }}
-
   selector:
     matchLabels:
       app: "dev-{{ .Release.Name }}-front"
-
   template:
     metadata:
       labels:
         app: "dev-{{ .Release.Name }}-front"
-
     spec:
       containers:
         - name: "dev-{{ .Release.Name }}-front"
@@ -28,10 +23,10 @@ spec:
           ports:
             - containerPort:  {{ .Values.front.port }}
               protocol: TCP
-          resources:
-            requests:
-              cpu: "{{ .Values.front.resources.requests.cpu }}"
-              memory: "{{ .Values.front.resources.requests.memory }}"
-            limits:
-              cpu: "{{ .Values.front.resources.limits.cpu }}"
-              memory: "{{ .Values.front.resources.limits.memory }}"
+          # resources:
+          #   requests:
+          #     cpu: "{{ .Values.front.resources.requests.cpu }}"
+          #     memory: "{{ .Values.front.resources.requests.memory }}"
+          #   limits:
+          #     cpu: "{{ .Values.front.resources.limits.cpu }}"
+          #     memory: "{{ .Values.front.resources.limits.memory }}"

@@ -1,20 +1,20 @@
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: "dev-{{ .Release.Name }}-front-hpa"
-  labels:
-    app: "dev-{{ .Release.Name }}-front"
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: "dev-{{ .Release.Name }}-front"
-  minReplicas: {{ .Values.front.autoscaling.minReplicas }}
-  maxReplicas: {{ .Values.front.autoscaling.maxReplicas }}
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: {{ .Values.front.autoscaling.cpuTarget }}
+# apiVersion: autoscaling/v2
+# kind: HorizontalPodAutoscaler
+# metadata:
+#   name: "dev-{{ .Release.Name }}-front-hpa"
+#   labels:
+#     app: "dev-{{ .Release.Name }}-front"
+# spec:
+#   scaleTargetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: "dev-{{ .Release.Name }}-front"
+#   minReplicas: {{ .Values.front.autoscaling.minReplicas }}
+#   maxReplicas: {{ .Values.front.autoscaling.maxReplicas }}
+#   metrics:
+#     - type: Resource
+#       resource:
+#         name: cpu
+#         target:
+#           type: Utilization
+#           averageUtilization: {{ .Values.front.autoscaling.cpuTarget }}

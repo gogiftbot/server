@@ -22,7 +22,7 @@ const corsOptions: cors.CorsOptions = {
 const app = express();
 const server = http.createServer(app);
 
-app.set("trust proxy", 1);
+app.set("trust proxy", true);
 app.use(cors(corsOptions));
 app.use(express.json({ limit: 81920 }));
 app.use(loggerMiddleware(context.logger));
