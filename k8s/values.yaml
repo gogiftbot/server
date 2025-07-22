@@ -6,15 +6,40 @@ hostname: gogift.space
 back:
   image: server
   pullPolicy: "Always"
-  replicas: 3
+  replicas: 2
   type: ClusterIP
   port: 4000
-  tag: release-2.1.62
+  tag: release-2.1.63
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    cpuTarget: 80
+    memoryTarget: 70
 
 front:
   image: web
   pullPolicy: "Always"
-  replicas: 2
+  replicas: 1
   type: ClusterIP
   port: 3000
   tag: release-2.1.6
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+  autoscaling:
+    minReplicas: 1
+    maxReplicas: 5 
+    cpuTarget: 60
+    rpsTarget: 100 

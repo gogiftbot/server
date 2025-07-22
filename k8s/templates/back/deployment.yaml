@@ -29,6 +29,13 @@ spec:
           ports:
             - containerPort: {{ .Values.back.port }}
               protocol: TCP
+          resources:
+            requests:
+              cpu: "{{ .Values.back.resources.requests.cpu }}"
+              memory: "{{ .Values.back.resources.requests.memory }}"
+            limits:
+              cpu: "{{ .Values.back.resources.limits.cpu }}"
+              memory: "{{ .Values.back.resources.limits.memory }}"
           envFrom:
             - configMapRef:
                 name: "dev-{{ .Release.Name }}-back-config"
