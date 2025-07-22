@@ -1,7 +1,7 @@
 container:
   repository: ghcr.io/gogiftbot
 
-hostname: gogift.space
+hostname: stage.gogift.space
 
 back:
   image: server
@@ -40,6 +40,5 @@ front:
       memory: "128Mi"
   autoscaling:
     minReplicas: 1
-    maxReplicas: 5 
+    maxReplicas: 5
     cpuTarget: 60
-    rpsTarget: 100 

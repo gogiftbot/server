@@ -18,10 +18,3 @@ spec:
         target:
           type: Utilization
           averageUtilization: {{ .Values.front.autoscaling.cpuTarget }}
-    - type: Pods
-      pods:
-        metric:
-          name: http_requests
-        target:
-          type: AverageValue
-          averageValue: "{{ .Values.front.autoscaling.rpsTarget }}/1s"

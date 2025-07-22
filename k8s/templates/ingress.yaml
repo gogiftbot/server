@@ -21,4 +21,4 @@ spec:
         - name: "dev-{{ .Release.Name }}-front"
           port: {{ .Values.front.port }}
   tls:
-    secretName: dev-tls
+    secretName: stage-tls
