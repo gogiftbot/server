@@ -9,7 +9,7 @@ back:
   replicas: 3
   type: ClusterIP
   port: 4000
-  tag: release-2.1.58
+  tag: release-2.1.6
 
 front:
   image: web
@@ -17,4 +17,4 @@ front:
   replicas: 2
   type: ClusterIP
   port: 3000
-  tag: release-2.1.57
+  tag: release-2.1.6
