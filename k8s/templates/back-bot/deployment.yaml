@@ -1,23 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
-
 metadata:
   name: "dev-{{ .Release.Name }}-back-bot"
   labels:
     app: "dev-{{ .Release.Name }}-back-bot"
   annotations:
     timestamp: {{ now | quote }}
-
 spec:
   selector:
     matchLabels:
       app: "dev-{{ .Release.Name }}-back-bot"
-
   template:
     metadata:
       labels:
         app: "dev-{{ .Release.Name }}-back-bot"
-
     spec:
       containers:
         - name: "dev-{{ .Release.Name }}-back-bot"
@@ -35,7 +31,6 @@ spec:
               mountPath: "/app/"
               readOnly: true
               subPath: ".env"
-
       volumes:
         - name: "dev-{{ .Release.Name }}-back-config-file"
           configMap:

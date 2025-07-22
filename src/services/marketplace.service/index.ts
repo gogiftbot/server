@@ -295,7 +295,7 @@ export class MarketplaceService {
           method: "POST",
           headers: {
             "Content-type": "application/json",
-            Authorization: `partners ${config.integration.portals}`,
+            Authorization: `partners ${config.integration.portals.apiKey}`,
           },
           body: JSON.stringify({
             gift_ids: [payload.id],
@@ -328,13 +328,15 @@ export class MarketplaceService {
           method: "GET",
           headers: {
             "Content-type": "application/json",
-            Authorization: `partners ${config.integration.portals}`,
+            Authorization: `partners ${config.integration.portals.apiKey}`,
           },
         },
       );
 
       const data = (await res.json()) as { exists?: boolean };
-      if (data.exists) return true;
+      if (!data.exists) throw new Error("NO_ACCOUNT");
+
+      return true;
     } catch (_error) {
       return false;
     } finally {

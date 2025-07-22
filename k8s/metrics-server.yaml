@@ -1,5 +1,0 @@
-replicas: 1
-apiService:
-  insecureSkipTLSVerify: false
-tls:
-  type: cert-manager

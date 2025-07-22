@@ -1,11 +1,9 @@
 apiVersion: v1
 kind: Service
-
 metadata:
   name: "dev-{{ .Release.Name }}-back-bot"
   labels:
     app: "dev-{{ .Release.Name }}-back-bot"
-
 spec:
   type: {{ .Values.back.type }}
   selector:
