@@ -48,7 +48,7 @@ const config = {
     },
   },
   redis: {
-    url: `redis://${env.REDIS_USERNAME}:${env.REDIS_PASSWORD}@${env.REDIS_DOMAIN}:${env.PORT}`,
+    url: `redis://${env.REDIS_USERNAME}:${env.REDIS_PASSWORD}@${env.REDIS_DOMAIN}:${env.REDIS_PORT}`,
     domain: env.REDIS_DOMAIN,
     port: env.REDIS_PORT,
     username: env.REDIS_USERNAME,
