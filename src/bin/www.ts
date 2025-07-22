@@ -26,7 +26,7 @@ app.set("trust proxy", 1);
 app.use(cors(corsOptions));
 app.use(express.json({ limit: 81920 }));
 app.use(loggerMiddleware(context.logger));
-app.use(limiterMiddleware(context.logger));
+// app.use(limiterMiddleware(context.logger));
 
 app.use(
   helmet({
