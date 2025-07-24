@@ -20,9 +20,9 @@ export async function RaffleParticipate(
         telegramId: true,
         referral: {
           select: {
-            _count: {
+            accounts: {
               select: {
-                accounts: true,
+                id: true,
               },
             },
           },
@@ -61,7 +61,7 @@ export async function RaffleParticipate(
 
     // if (!isSubscribed) throw new Error("TASK_1");
 
-    if (!account.referral?._count) throw new Error("TASK_1");
+    if (!account.referral?.accounts.length) throw new Error("TASK_1");
 
     await tx.raffle.update({
       where: {
