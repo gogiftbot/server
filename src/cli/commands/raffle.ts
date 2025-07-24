@@ -17,19 +17,19 @@ wrapper(async ({ context }) => {
 
   await context.prisma.raffleNft.create({
     data: {
-      id: "aa68fba5-4304-4cca-9088-8c5f3624c143",
-      title: "Light Speed",
-      price: 31.11,
-      sku: "helmet-giveaway",
+      id: "8e0a43ab-0df6-4d33-9f07-013884cc5cec",
+      title: "Genie Lamp",
+      price: 57.19,
+      sku: "genie-lamp",
     },
   });
 
   await context.prisma.raffle.createMany({
     data: [
       {
-        id: "97e8f432-7958-4870-99db-92e0c0b092cc",
+        id: "421f6723-37ff-4ab4-8727-a8d48f28aa77",
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        nftId: "aa68fba5-4304-4cca-9088-8c5f3624c143",
+        nftId: "8e0a43ab-0df6-4d33-9f07-013884cc5cec",
       },
     ],
   });
@@ -37,12 +37,12 @@ wrapper(async ({ context }) => {
   await context.prisma.raffleTask.createMany({
     data: [
       {
-        id: "1c613fc1-b4ed-469e-b72d-09505d8d086d",
-        titleRU: "Голосуй за нас",
-        titleEN: "Vote for us",
-        linkTitle: "@tapps",
-        linkUrl: "https://t.me/tapps_bot/center?startapp=app_gogift",
-        raffleId: "97e8f432-7958-4870-99db-92e0c0b092cc",
+        id: "9d536207-c7a4-4066-a17f-639d807a33ac",
+        titleRU: "Пригласи 1 друга",
+        titleEN: "Invite 1 friend",
+        linkTitle: "friends",
+        linkUrl: "/affiliate",
+        raffleId: "421f6723-37ff-4ab4-8727-a8d48f28aa77",
         createdAt: new Date(),
       },
     ],

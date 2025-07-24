@@ -9,25 +9,24 @@ back:
   replicas: 2
   type: ClusterIP
   port: 4000
-  tag: release-2.1.64
+  tag: release-2.1.65
   resources:
     requests:
-      cpu: "100m"
-      memory: "128Mi"
+      cpu: "250m"
+      memory: "256Mi"
     limits:
       cpu: "500m"
       memory: "512Mi"
   autoscaling:
-    enabled: true
     minReplicas: 2
-    maxReplicas: 10
-    cpuTarget: 80
-    memoryTarget: 70
+    maxReplicas: 6
+    cpuTarget: "200m"
+    memoryTarget: "300000000"
 
 front:
   image: web
   pullPolicy: "Always"
-  replicas: 2
+  replicas: 3
   type: ClusterIP
   port: 3000
   tag: release-2.1.6
@@ -41,4 +40,5 @@ front:
   autoscaling:
     minReplicas: 2
     maxReplicas: 5
-    cpuTarget: 60
+    cpuTarget: 0.05
+    memoryTarget: 500000000

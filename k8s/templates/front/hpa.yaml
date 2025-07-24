@@ -12,9 +12,17 @@
 #   minReplicas: {{ .Values.front.autoscaling.minReplicas }}
 #   maxReplicas: {{ .Values.front.autoscaling.maxReplicas }}
 #   metrics:
-#     - type: Resource
-#       resource:
-#         name: cpu
+#     - type: Pods
+#       pods:
+#         metric:
+#           name: cpu_usage_seconds_total 
 #         target:
-#           type: Utilization
-#           averageUtilization: {{ .Values.front.autoscaling.cpuTarget }}
+#           type: AverageValue
+#           averageValue: {{ .Values.front.autoscaling.cpuTarget }}
+#     - type: Pods
+#       pods:
+#         metric:
+#           name: memory_usage_bytes
+#         target:
+#           type: AverageValue
+#           averageValue: {{ .Values.front.autoscaling.memoryTarget }}

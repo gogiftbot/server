@@ -1,0 +1,19 @@
+rules:
+  custom:
+    - seriesQuery: 'container_cpu_usage_seconds_total{container!="POD"}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        as: "cpu_usage_seconds_total"
+      metricsQuery: 'sum(rate(container_cpu_usage_seconds_total{<<.LabelMatchers>>,container!="POD"}[2m])) by (<<.GroupBy>>)'
+      
+    - seriesQuery: 'container_memory_working_set_bytes{container!="POD"}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        as: "memory_usage_bytes"
+      metricsQuery: 'sum(container_memory_working_set_bytes{<<.LabelMatchers>>,container!="POD"}) by (<<.GroupBy>>)'
