@@ -9,12 +9,19 @@ import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 
 wrapper(async ({ context }) => {
-  const gift = await marketplaceService.getGiftToWithdraw({
-    title: "Bday Candle",
+  const nfts = await context.prisma.gift_case.findMany({
+    select: {
+      id: true,
+      title: true,
+      price: true,
+      gifts: {
+        select: {
+          id: true,
+          title: true,
+          price: true,
+        },
+      },
+    },
   });
-
-  await marketplaceService.sendGift({
-    id: gift.id,
-    recipient: 653517638,
-  });
+  toFile(nfts);
 });
