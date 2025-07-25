@@ -254,7 +254,7 @@ export class MarketplaceService {
 
   async purchase(payload: { id: string; price: string }): Promise<void> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 10_000); // 15 seconds
 
     try {
       const res = await fetch(`https://portals-market.com/api/nfts`, {
@@ -348,7 +348,7 @@ export class MarketplaceService {
     title: string;
   }): Promise<{ id: string; price: string } | undefined> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 10_000); // 15 seconds
 
     const shortname = mapper[payload.title];
     if (!shortname) throw new Error("INVALID_SHORTNAME");
@@ -387,7 +387,7 @@ export class MarketplaceService {
 
   async getGiftFromAuction(payload: { title: string }) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15_000); // 15 seconds
+    const timeoutId = setTimeout(() => controller.abort(), 10_000); // 15 seconds
 
     const shortname = mapper[payload.title];
     if (!shortname) throw new Error("INVALID_SHORTNAME");

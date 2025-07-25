@@ -157,61 +157,54 @@ export class AccountService {
 
     try {
       try {
-        const transaction = await retry(
-          async () => {
-            return this.prisma.$transaction(
-              async (tx) => {
-                const transaction = await tx.transaction.findUniqueOrThrow({
-                  where: {
-                    id: payload.transactionId,
-                    status: TransactionStatus.pending,
-                  },
+        const transaction = await this.prisma.$transaction(
+          async (tx) => {
+            const transaction = await tx.transaction.findUniqueOrThrow({
+              where: {
+                id: payload.transactionId,
+                status: TransactionStatus.pending,
+              },
+              select: {
+                id: true,
+                amount: true,
+                accountGift: {
                   select: {
-                    id: true,
-                    amount: true,
-                    accountGift: {
-                      select: {
-                        nft: true,
-                        isSold: true,
-                        isWithdraw: true,
-                        case: { select: { title: true } },
-                      },
-                    },
-                    account: { select: { id: true, telegramId: true } },
+                    nft: true,
+                    isSold: true,
+                    isWithdraw: true,
+                    case: { select: { title: true } },
                   },
-                });
-
-                if (!transaction.accountGift) throw new Error("INVALID_GIFT");
-                if (!transaction.account.telegramId)
-                  throw new Error("INVALID_TELEGRAM_ID");
-
-                await tx.transaction.update({
-                  where: {
-                    id: transaction.id,
-                  },
-                  data: {
-                    status: TransactionStatus.completed,
-                  },
-                });
-
-                const gift = await marketplaceService.getGiftToWithdraw({
-                  title: transaction.accountGift.nft.title,
-                });
-
-                await marketplaceService.sendGift({
-                  id: gift.id,
-                  recipient: parseInt(transaction.account.telegramId),
-                });
-
-                return transaction;
+                },
+                account: { select: { id: true, telegramId: true } },
               },
-              {
-                timeout: 20_000,
+            });
+
+            if (!transaction.accountGift) throw new Error("INVALID_GIFT");
+            if (!transaction.account.telegramId)
+              throw new Error("INVALID_TELEGRAM_ID");
+
+            await tx.transaction.update({
+              where: {
+                id: transaction.id,
               },
-            );
+              data: {
+                status: TransactionStatus.completed,
+              },
+            });
+
+            const gift = await marketplaceService.getGiftToWithdraw({
+              title: transaction.accountGift.nft.title,
+            });
+
+            await marketplaceService.sendGift({
+              id: gift.id,
+              recipient: parseInt(transaction.account.telegramId),
+            });
+
+            return transaction;
           },
           {
-            retries: 3,
+            timeout: 60_000,
           },
         );
 
