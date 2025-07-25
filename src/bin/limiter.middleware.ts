@@ -16,8 +16,8 @@ const limiterMiddleware = (logger?: Context["logger"]) => {
   );
 
   return rateLimit({
-    windowMs: 60 * 1000,
-    max: 50,
+    windowMs: 1000,
+    max: 3,
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({

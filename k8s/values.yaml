@@ -9,7 +9,7 @@ back:
   replicas: 4
   type: ClusterIP
   port: 4000
-  tag: release-2.1.67
+  tag: release-2.1.68
   resources:
     requests:
       cpu: "250m"
