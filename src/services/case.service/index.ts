@@ -1,5 +1,9 @@
-import { nft } from "@prisma/client";
+import { nft, Prisma } from "@prisma/client";
 
+const caseWithGifts = Prisma.validator<Prisma.gift_caseDefaultArgs>()({
+  include: { gifts: true },
+});
+type CaseWithGifts = Prisma.gift_caseGetPayload<typeof caseWithGifts>;
 
 export const allowedFirstCaseIds = [
   "4e5f6g7h-8i9j-0k1l-2m3n-4o5p6q7r8s9t", // Big Tease
@@ -113,7 +117,7 @@ export const freeCase = [
 export const influenceIds = ["9f7f7b59-cde8-4c24-b329-fbee95acd09d"];
 
 export class CaseService<
-  T extends Pick<nft, "id" | "price" | "sku" | "title">
+  T extends Pick<nft, "id" | "price" | "sku" | "title">,
 > {
   public static TON_GIFT = "ton";
 
@@ -137,7 +141,7 @@ export class CaseService<
 
   public calculateOdds(
     nfts: T[],
-    exponent = CaseService.EXPONENT
+    exponent = CaseService.EXPONENT,
   ): (T & { odds: number })[] {
     const weights = nfts.map((nft) => 1 / Math.pow(nft.price, exponent));
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
@@ -158,7 +162,7 @@ export class CaseService<
     );
   }
 
-  public static async analytics(prisma: Context['prisma']) {
+  public static async analytics(prisma: Context["prisma"]) {
     const cases = await prisma.gift_case.findMany({
       include: {
         gifts: true,
@@ -172,6 +176,21 @@ export class CaseService<
         case: g_case.title,
         price: g_case.price,
         price_0_margin: price,
+        price_50_margin: price_50,
+      };
+    });
+  }
+
+  public static async jsonAnalytics(cases: CaseWithGifts[]) {
+    return cases.map((g_case) => {
+      const price = caseService.calculatePrice(g_case.gifts, 0);
+      const price_20 = caseService.calculatePrice(g_case.gifts, 0.2);
+      const price_50 = caseService.calculatePrice(g_case.gifts, 0.5);
+      return {
+        case: g_case.title,
+        price: g_case.price,
+        price_0_margin: price,
+        price_20_margin: price_20,
         price_50_margin: price_50,
       };
     });

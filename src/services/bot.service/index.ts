@@ -31,6 +31,7 @@ import {
   welcomeMessage,
   welcomeMessageOptions,
 } from "./messages";
+import { onFileUpload } from "./commands/file";
 
 const welcomeMessageImage = "https://gogift.vercel.app/start_image.png";
 
@@ -52,6 +53,10 @@ export class BotService {
   }
 
   public listen() {
+    this.bot.on("document", async (...args) =>
+      onFileUpload(...args, this.bot, this.chatId, this.prisma),
+    );
+
     this.bot.on("error", (error) => {
       console.error((error as Error).message);
     });
