@@ -1,7 +1,7 @@
 import { config } from "@/config";
 import UserAgent from "user-agents";
 
-const mapper: Record<string, string> = {
+export const mapper: Record<string, string> = {
   "Xmas Stocking": "xmasstocking",
   "Swiss Watch": "swisswatch",
   "Top Hat": "tophat",
@@ -56,9 +56,12 @@ const mapper: Record<string, string> = {
   "Light Sword": "lightsword",
   "Love Candle": "lovecandle",
   "Restless Jar": "restlessjar",
+  "Cupid Charm": "cupidcharm",
+  "Joyful Bundle": "joyfulbundle",
+  "Valentine Box": "valentinebox",
 };
 
-const shortNameMapper: Record<string, string> = {
+export const shortNameMapper: Record<string, string> = {
   astralshard: "Astral Shard",
   bdaycandle: "B-Day Candle",
   berrybox: "Berry Box",
@@ -136,6 +139,9 @@ const shortNameMapper: Record<string, string> = {
   lightsword: "Light Sword",
   lovecandle: "Love Candle",
   restlessjar: "Restless Jar",
+  cupidcharm: "Cupid Charm",
+  joyfulbundle: "Joyful Bundle",
+  valentinebox: "Valentine Box",
 };
 
 const Authorization =

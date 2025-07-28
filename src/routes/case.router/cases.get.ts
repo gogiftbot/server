@@ -1,7 +1,10 @@
-import { BonusType } from '@prisma/client'
+import { BonusType } from "@prisma/client";
 import { freeCase } from "@/services/case.service";
 
-const getFreeCaseKeysCount = async (prisma: Context['prisma'], accountId?: string) => {
+const getFreeCaseKeysCount = async (
+  prisma: Context["prisma"],
+  accountId?: string,
+) => {
   if (!accountId) return 0;
   return prisma.bonus.count({
     where: {
@@ -12,7 +15,10 @@ const getFreeCaseKeysCount = async (prisma: Context['prisma'], accountId?: strin
   });
 };
 
-export async function CasesGet(prisma: Context['prisma'], acc: Express.Request['account']) {
+export async function CasesGet(
+  prisma: Context["prisma"],
+  acc: Express.Request["account"],
+) {
   const cases = await prisma.gift_case.findMany({
     where: {
       isArchived: false,
@@ -38,7 +44,7 @@ export async function CasesGet(prisma: Context['prisma'], acc: Express.Request['
   });
 
   const targetIndex = cases.findIndex(
-    (item) => item.title === "Heart’s Secret"
+    (item) => item.title === "Sweet Surprise",
   );
 
   if (targetIndex !== -1) {
@@ -48,5 +54,5 @@ export async function CasesGet(prisma: Context['prisma'], acc: Express.Request['
 
   const keys = await getFreeCaseKeysCount(prisma, acc?.id);
 
-  return { cases, free: { rewards: freeCase, keys } }
+  return { cases, free: { rewards: freeCase, keys } };
 }

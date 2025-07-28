@@ -9,7 +9,7 @@ back:
   replicas: 4
   type: ClusterIP
   port: 4000
-  tag: release-2.1.71
+  tag: release-2.1.72
   resources:
     requests:
       cpu: "250m"
@@ -29,7 +29,7 @@ front:
   replicas: 3
   type: ClusterIP
   port: 3000
-  tag: release-2.1.67
+  tag: release-2.1.75
   resources:
     requests:
       cpu: "50m"
