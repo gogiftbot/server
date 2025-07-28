@@ -329,58 +329,56 @@ export class BotService {
             if (!transactionId) throw new Error("InvalidTransactionId");
             if (!callbackQuery.message) throw new Error("InvalidMessage");
 
-            await this.prisma.$transaction(async (tx) => {
-              const transaction = await tx.transaction.findUniqueOrThrow({
-                where: {
-                  id: transactionId,
-                  status: TransactionStatus.pending,
-                },
-                select: {
-                  id: true,
-                  accountGift: { select: { nft: true } },
-                  account: { select: { telegramId: true } },
-                },
-              });
+            await this.prisma.$transaction(
+              async (tx) => {
+                const transaction = await tx.transaction.findUniqueOrThrow({
+                  where: {
+                    id: transactionId,
+                    status: TransactionStatus.pending,
+                  },
+                  select: {
+                    id: true,
+                    accountGift: { select: { nft: true } },
+                    account: { select: { telegramId: true } },
+                  },
+                });
 
-              if (!transaction.accountGift) throw new Error("INVALID_GIFT");
-              if (!transaction.account.telegramId)
-                throw new Error("INVALID_TELEGRAM_ID");
+                if (!transaction.accountGift) throw new Error("INVALID_GIFT");
+                if (!transaction.account.telegramId)
+                  throw new Error("INVALID_TELEGRAM_ID");
 
-              await tx.transaction.update({
-                where: {
-                  id: transaction.id,
-                },
-                data: {
-                  status: TransactionStatus.completed,
-                },
-              });
+                await tx.transaction.update({
+                  where: {
+                    id: transaction.id,
+                  },
+                  data: {
+                    status: TransactionStatus.completed,
+                  },
+                });
 
-              await retry(
-                async () => {
-                  const gift = await marketplaceService
-                    .getGiftToWithdraw({
-                      title: transaction.accountGift!.nft.title,
-                    })
-                    .catch(() => {
-                      throw new Error(`cant_purchase (check ton balance)`);
-                    });
+                const gift = await marketplaceService
+                  .getGiftToWithdraw({
+                    title: transaction.accountGift!.nft.title,
+                  })
+                  .catch(() => {
+                    throw new Error(`cant_purchase (check ton balance)`);
+                  });
 
-                  try {
-                    await marketplaceService.sendGift({
-                      id: gift.id,
-                      recipient: parseInt(transaction.account.telegramId!),
-                    });
-                  } catch (error) {
-                    throw new Error(`cant_send:${transaction.id}`);
-                  }
-                },
-                {
-                  retries: 3,
-                },
-              );
+                try {
+                  await marketplaceService.sendGift({
+                    id: gift.id,
+                    recipient: parseInt(transaction.account.telegramId!),
+                  });
+                } catch (error) {
+                  throw new Error(`cant_send:${transaction.id}`);
+                }
 
-              return transaction;
-            });
+                return transaction;
+              },
+              {
+                timeout: 20_000,
+              },
+            );
 
             await this.bot.sendMessage(
               callbackQuery.message.chat.id,

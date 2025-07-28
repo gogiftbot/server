@@ -9,34 +9,34 @@ import { tonService } from "@/services/ton.service";
 import { PrismaClient } from "@prisma/client";
 
 wrapper(async ({ context }) => {
-  //   await context.prisma.nft.createMany({
-  //     data: [
-  //       {
-  //         id: "de4d3232-532c-4f00-bd73-eade7ce54091",
-  //         price: 14.5,
-  //         title: "Cupid Charm",
-  //         sku: "cupid-charm",
-  //       },
-  //       {
-  //         id: "4bd408bc-2916-41dc-92e9-5fa421f742cc",
-  //         price: 2.97,
-  //         title: "Joyful Bundle",
-  //         sku: "joyful-bundle",
-  //       },
-  //       {
-  //         id: "597d2241-2be3-41fd-90c7-bb5fcd1330ee",
-  //         price: 4.6,
-  //         title: "Valentine Box",
-  //         sku: "valentine-box",
-  //       },
-  //       {
-  //         id: "79188672-1866-430b-af0c-745a49ecb145",
-  //         price: 0.5,
-  //         title: "TON",
-  //         sku: "ton",
-  //       },
-  //     ],
-  //   });
+  await context.prisma.nft.createMany({
+    data: [
+      {
+        id: "de4d3232-532c-4f00-bd73-eade7ce54091",
+        price: 14.5,
+        title: "Cupid Charm",
+        sku: "cupid-charm",
+      },
+      {
+        id: "4bd408bc-2916-41dc-92e9-5fa421f742cc",
+        price: 2.97,
+        title: "Joyful Bundle",
+        sku: "joyful-bundle",
+      },
+      {
+        id: "597d2241-2be3-41fd-90c7-bb5fcd1330ee",
+        price: 4.6,
+        title: "Valentine Box",
+        sku: "valentine-box",
+      },
+      {
+        id: "79188672-1866-430b-af0c-745a49ecb145",
+        price: 0.5,
+        title: "TON",
+        sku: "ton",
+      },
+    ],
+  });
 
   await context.prisma.gift_case.create({
     data: {
@@ -89,4 +89,6 @@ wrapper(async ({ context }) => {
       },
     },
   });
+
+  await marketplaceService.updatePrices(context.prisma);
 });
