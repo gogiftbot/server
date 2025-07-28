@@ -121,7 +121,7 @@ export class CaseService<
 > {
   public static TON_GIFT = "ton";
 
-  private static EXPONENT = 1.8;
+  private static EXPONENT = 2;
 
   public open(nfts: T[], exponent?: number): T {
     const gifts = this.calculateOdds(nfts, exponent);

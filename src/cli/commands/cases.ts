@@ -9,20 +9,23 @@ import { tonService } from "@/services/ton.service";
 import { PrismaClient } from "@prisma/client";
 
 wrapper(async ({ context }) => {
-  const giftCase = await context.prisma.gift_case.findUniqueOrThrow({
+  const cases = await context.prisma.gift_case.findUniqueOrThrow({
     where: {
       id: "9aef821f-d524-430e-bc0c-43472cd18780",
     },
     select: {
-      gifts: true,
+      id: true,
+      title: true,
+      price: true,
+      gifts: {
+        select: {
+          id: true,
+          sku: true,
+          title: true,
+          price: true,
+        },
+      },
     },
   });
-
-  let plus = 0;
-  for (let i = 0; i < 1000; i++) {
-    const gift = caseService.open(giftCase.gifts, 2);
-    plus += gift.price;
-  }
-
-  console.log(plus, "ton");
+  console.log(caseService.calculateOdds(cases.gifts, 2));
 });
