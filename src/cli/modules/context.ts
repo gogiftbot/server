@@ -8,14 +8,15 @@ const initContext = (): Context => {
   prisma.$connect();
 
   const logger = initLogger();
-  const cache = initCache();
-  const pubsub = initPubsub();
+  // const cache = initCache();
+  // const pubsub = initPubsub();
 
+  // @ts-ignore
   const context: Context = Object.freeze({
     prisma,
     logger,
-    cache,
-    pubsub,
+    // cache,
+    // pubsub,
   });
 
   return context;

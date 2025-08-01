@@ -37,7 +37,7 @@ export async function CaseOpenFree(
     const bonus = account.bonuses.shift();
     if (!bonus) throw new Error("NO_KEYS");
 
-    const reward = caseService.open(freeCase);
+    const reward = caseService.open(freeCase, 2);
 
     await tx.account.update({
       where: {

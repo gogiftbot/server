@@ -11,7 +11,7 @@ import { PrismaClient } from "@prisma/client";
 wrapper(async ({ context }) => {
   const giftCase = await context.prisma.gift_case.findUniqueOrThrow({
     where: {
-      id: "9aef821f-d524-430e-bc0c-43472cd18780",
+      id: "314e391d-5d5e-437c-a0f0-a33c1cd8a5ed",
     },
     select: {
       gifts: true,
@@ -20,7 +20,7 @@ wrapper(async ({ context }) => {
 
   let plus = 0;
   for (let i = 0; i < 1000; i++) {
-    const gift = caseService.open(giftCase.gifts, 2);
+    const gift = caseService.open(giftCase.gifts, 1.1);
     plus += gift.price;
   }
 

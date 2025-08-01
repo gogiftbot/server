@@ -124,6 +124,7 @@ model gift_case {
   price      Float
   starPrice  Int     @default(0) @map("star_price")
   isArchived Boolean @default(false) @map("is_archived")
+  exponent   Int     @default(2)
 
   gifts        nft[]
   accountGifts account_gift[]

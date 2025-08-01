@@ -59,6 +59,11 @@ export const mapper: Record<string, string> = {
   "Cupid Charm": "cupidcharm",
   "Joyful Bundle": "joyfulbundle",
   "Valentine Box": "valentinebox",
+  "Westside Sign": "westsidesign",
+  "Low Rider": "lowrider",
+  "Snoop Cigar": "snoopcigar",
+  "Snoop Dog": "snoopdogg",
+  "Swag Bag": "swagbag",
 };
 
 export const shortNameMapper: Record<string, string> = {
@@ -142,6 +147,12 @@ export const shortNameMapper: Record<string, string> = {
   cupidcharm: "Cupid Charm",
   joyfulbundle: "Joyful Bundle",
   valentinebox: "Valentine Box",
+
+  westsidesign: "Westside Sign",
+  lowrider: "Low Rider",
+  snoopcigar: "Snoop Cigar",
+  snoopdogg: "Snoop Dogg",
+  swagbag: "Swag Bag",
 };
 
 const Authorization =

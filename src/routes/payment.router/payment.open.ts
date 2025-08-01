@@ -1,4 +1,4 @@
-import { TransactionType, TransactionCurrency } from '@prisma/client'
+import { TransactionType, TransactionCurrency } from "@prisma/client";
 import {
   allowedFirstCaseIds,
   CaseService,
@@ -12,11 +12,15 @@ type ResponseData = {
   nft: { id: string; title: string; price: number; sku: string };
 };
 
-export async function PaymentOpen(prisma: Context['prisma'], acc: Express.Request['account'], payload: { caseId: string; transactionId: string }) {
+export async function PaymentOpen(
+  prisma: Context["prisma"],
+  acc: Express.Request["account"],
+  payload: { caseId: string; transactionId: string },
+) {
   const gift = await prisma.$transaction(async (tx) => {
     const account = await tx.account.findUniqueOrThrow({
       where: {
-        id: acc?.id
+        id: acc?.id,
       },
       include: {
         gifts: true,
@@ -42,6 +46,7 @@ export async function PaymentOpen(prisma: Context['prisma'], acc: Express.Reques
       select: {
         id: true,
         price: true,
+        exponent: true,
         gifts: {
           select: {
             id: true,
@@ -94,7 +99,7 @@ export async function PaymentOpen(prisma: Context['prisma'], acc: Express.Reques
       return responseData;
     }
 
-    const gift = caseService.open(giftCase.gifts);
+    const gift = caseService.open(giftCase.gifts, giftCase.exponent);
     const isTon = gift.title === CaseService.TON_GIFT.toUpperCase();
 
     const accountGift = await tx.account_gift.create({
@@ -142,5 +147,5 @@ export async function PaymentOpen(prisma: Context['prisma'], acc: Express.Reques
     return responseData;
   });
 
-  return { gift }
+  return { gift };
 }

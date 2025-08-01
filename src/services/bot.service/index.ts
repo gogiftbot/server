@@ -105,7 +105,7 @@ export class BotService {
               type: TransactionType.deposit,
               status: TransactionStatus.pending,
               currency: TransactionCurrency.star,
-              accountGift: null,
+              // accountGift: null,
             },
             select: { id: true },
           });
@@ -911,7 +911,7 @@ export class BotService {
                     status: {
                       in: [
                         TransactionStatus.completed,
-                        TransactionStatus.completed,
+                        TransactionStatus.pending,
                       ],
                     },
                   },

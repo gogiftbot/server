@@ -18,7 +18,16 @@ export async function AccountGet(
       gifts: {
         include: {
           nft: true,
-          case: true,
+          case: {
+            select: {
+              id: true,
+              title: true,
+              sku: true,
+              price: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
         },
         where: {
           isWithdraw: false,

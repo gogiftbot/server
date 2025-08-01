@@ -121,9 +121,7 @@ export class CaseService<
 > {
   public static TON_GIFT = "ton";
 
-  private static EXPONENT = 2;
-
-  public open(nfts: T[], exponent?: number): T {
+  public open(nfts: T[], exponent: number): T {
     const gifts = this.calculateOdds(nfts, exponent);
     const totalRate = gifts.reduce((sum, gift) => sum + gift.odds, 0);
     const rand = Math.random() * totalRate;
@@ -139,10 +137,7 @@ export class CaseService<
     return nfts[nfts.length - 1];
   }
 
-  public calculateOdds(
-    nfts: T[],
-    exponent = CaseService.EXPONENT,
-  ): (T & { odds: number })[] {
+  public calculateOdds(nfts: T[], exponent: number): (T & { odds: number })[] {
     const weights = nfts.map((nft) => 1 / Math.pow(nft.price, exponent));
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
@@ -152,13 +147,16 @@ export class CaseService<
     }));
   }
 
-  public calculatePrice(nfts: T[], margin: number): number {
-    const gifts = this.calculateOdds(nfts);
+  public calculatePrice(
+    nfts: T[],
+    options: { margin: number; exponent: number },
+  ): number {
+    const gifts = this.calculateOdds(nfts, options.exponent);
     return (
       +gifts
         .reduce((sum, gift) => sum + gift.price * (gift.odds / 100), 0)
         .toFixed(2) *
-      (1 + margin)
+      (1 + options.margin)
     );
   }
 
@@ -170,8 +168,14 @@ export class CaseService<
     });
 
     return cases.map((g_case) => {
-      const price = caseService.calculatePrice(g_case.gifts, 0);
-      const price_50 = caseService.calculatePrice(g_case.gifts, 0.5);
+      const price = caseService.calculatePrice(g_case.gifts, {
+        margin: 0,
+        exponent: g_case.exponent,
+      });
+      const price_50 = caseService.calculatePrice(g_case.gifts, {
+        margin: 0.5,
+        exponent: g_case.exponent,
+      });
       return {
         case: g_case.title,
         price: g_case.price,
@@ -183,9 +187,18 @@ export class CaseService<
 
   public static async jsonAnalytics(cases: CaseWithGifts[]) {
     return cases.map((g_case) => {
-      const price = caseService.calculatePrice(g_case.gifts, 0);
-      const price_20 = caseService.calculatePrice(g_case.gifts, 0.2);
-      const price_50 = caseService.calculatePrice(g_case.gifts, 0.5);
+      const price = caseService.calculatePrice(g_case.gifts, {
+        margin: 0,
+        exponent: g_case.exponent,
+      });
+      const price_20 = caseService.calculatePrice(g_case.gifts, {
+        margin: 0.2,
+        exponent: g_case.exponent,
+      });
+      const price_50 = caseService.calculatePrice(g_case.gifts, {
+        margin: 0.5,
+        exponent: g_case.exponent,
+      });
       return {
         case: g_case.title,
         price: g_case.price,

@@ -37,6 +37,7 @@ export async function CaseOpen(
       select: {
         id: true,
         price: true,
+        exponent: true,
         gifts: {
           select: {
             id: true,
@@ -112,7 +113,7 @@ export async function CaseOpen(
       return responseData;
     }
 
-    const gift = caseService.open(giftCase.gifts);
+    const gift = caseService.open(giftCase.gifts, giftCase.exponent);
     const isTon = gift.title === CaseService.TON_GIFT.toUpperCase();
 
     const accountGift = await tx.account_gift.create({

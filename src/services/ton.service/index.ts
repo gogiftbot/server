@@ -2,14 +2,10 @@ import { AccountEvent, TonApiClient } from "@ton-api/client";
 import { Address, fromNano, SendMode, toNano } from "@ton/core";
 import { mnemonicToPrivateKey } from "@ton/crypto";
 import { TonClient, WalletContractV5R1, internal } from "@ton/ton";
-import {
-  BonusType,
-  TransactionStatus,
-  TransactionType,
-} from "@prisma/client";
-import { config } from '@/config'
+import { BonusType, TransactionStatus, TransactionType } from "@prisma/client";
+import { config } from "@/config";
 import { BotService } from "../bot.service";
-import { numberToString } from "@/utils/number"
+import { numberToString } from "@/utils/number";
 
 type DepositTX = {
   from: string;
@@ -31,8 +27,7 @@ export class TonService {
     apiKey: config.ton.center.apiKey,
   });
 
-
-  public async onDepositTx(prisma: Context['prisma']) {
+  public async onDepositTx(prisma: Context["prisma"]) {
     const transaction = await prisma.ton_transaction.findFirst({
       where: {
         transaction: {
@@ -56,11 +51,11 @@ export class TonService {
       {
         limit: 100,
         start_date: startDate,
-      }
+      },
     );
 
     const depositTxs: DepositTX[] = events.flatMap((event) =>
-      this.parseEvent({ event })
+      this.parseEvent({ event }),
     );
 
     for (const depositTx of depositTxs) {
@@ -95,7 +90,7 @@ export class TonService {
             "amount: ",
             numberToString(depositTx.amount),
             "bonusId: ",
-            depositTx.bonusId
+            depositTx.bonusId,
           );
 
           if (account.referredBy?.accountId) {
@@ -214,7 +209,7 @@ export class TonService {
       if (action.TonTransfer?.comment && action.TonTransfer?.amount) {
         try {
           const data: { accountId?: string; bonusId?: string } = JSON.parse(
-            action.TonTransfer.comment!
+            action.TonTransfer.comment!,
           );
 
           if (!data.accountId) throw new Error("INVALID_TX_COMMENT");
@@ -253,6 +248,7 @@ export class TonService {
 
   public async send(payload: { amount: number; address: string }) {
     try {
+      if (!config.ton.mnemonic) throw new Error("INVALID_MNEMONIC");
       const mnemonic = config.ton.mnemonic.split(" ");
       const keyPair = await mnemonicToPrivateKey(mnemonic);
       const walletContract = WalletContractV5R1.create({
@@ -308,7 +304,7 @@ export class TonService {
 
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch TON/USD exchange rate: ${response.statusText}`
+        `Failed to fetch TON/USD exchange rate: ${response.statusText}`,
       );
     }
 
@@ -318,7 +314,7 @@ export class TonService {
   }
 
   public async calculateCaseStarPrices<T extends { price: number }>(
-    giftCases: T[]
+    giftCases: T[],
   ) {
     const tonToUsd = await tonService.getExchangeRates();
     return giftCases.map((giftCase) => {
@@ -327,7 +323,7 @@ export class TonService {
     });
   }
 
-  public async updateCasesPriceInStar(prisma: Context['prisma']) {
+  public async updateCasesPriceInStar(prisma: Context["prisma"]) {
     const gift_cases = await prisma.gift_case.findMany({
       select: {
         id: true,
