@@ -6,10 +6,10 @@ hostname: gogift.space
 back:
   image: server
   pullPolicy: "Always"
-  replicas: 4
+  replicas: 5
   type: ClusterIP
   port: 4000
-  tag: release-2.1.77
+  tag: release-2.1.79
   resources:
     requests:
       cpu: "250m"
@@ -26,10 +26,10 @@ back:
 front:
   image: web
   pullPolicy: "Always"
-  replicas: 3
+  replicas: 4
   type: ClusterIP
   port: 3000
-  tag: release-2.1.77
+  tag: release-2.1.796
   resources:
     requests:
       cpu: "50m"

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "gift_cases" ALTER COLUMN "exponent" SET DEFAULT 2,
+ALTER COLUMN "exponent" SET DATA TYPE DOUBLE PRECISION;
