@@ -43,7 +43,7 @@ export async function CasesGet(
     },
   });
 
-  const targetIndex = cases.findIndex((item) => item.title === "Westside");
+  const targetIndex = cases.findIndex((item) => item.title === "Ghetto");
 
   if (targetIndex !== -1) {
     const [targetItem] = cases.splice(targetIndex, 1);
